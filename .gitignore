@@ -6,13 +6,16 @@
 configs/*.env
 !configs/*.env.example
 
-# Input data, model indexes, and generated artifacts
-data/
+# Input data and retrieval indexes. Keep only the tracked directory markers.
+data/**
+!data/**/
+!data/**/.gitkeep
 checkpoints/
 logs/
 outputs/
 wandb/
 ray_results/
+ray_tmp/
 verl_step_records/
 eval_results/
 analysis/

@@ -2,6 +2,7 @@
 # Install verl from its official repository/release, then install these extras.
 datasets>=3.0
 faiss-cpu>=1.8
+hydra-core>=1.3
 numpy>=1.26
 omegaconf>=2.3
 pyyaml>=6.0

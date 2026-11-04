@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "simrec"
+version = "0.1.0"
+description = "SimRec: learning to search, ask, and recommend from simulated interaction"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "datasets>=3.0",
+  "faiss-cpu>=1.8",
+  "hydra-core>=1.3",
+  "numpy>=1.26",
+  "omegaconf>=2.3",
+  "pyyaml>=6.0",
+  "requests>=2.31",
+  "sentence-transformers>=3.0",
+  "transformers>=4.51",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
