@@ -115,7 +115,7 @@ class SimRecRewardManager(RewardManagerBase):
         self.reward_fn_key = reward_fn_key or "data_source"
         self.step = 1
         run_id = os.environ.get("VERL_RUN_ID") or f"sim-rec-{time.strftime('%Y-%m-%d-%H-%M-%S')}"
-        record_root = Path(kwargs.get("record_dir", Path(__file__).resolve().parents[3] / "outputs/verl_step_records"))
+        record_root = Path(kwargs.get("record_dir", Path(__file__).resolve().parents[1] / "outputs/verl_step_records"))
         self.record_dir = record_root / run_id
         self.record_dir.mkdir(parents=True, exist_ok=True)
         self._recall_search_backend: SearchBackend | None = None

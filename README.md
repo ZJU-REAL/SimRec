@@ -10,14 +10,14 @@
 </div>
 
 <p align="center">
-  <img src="assets/abstract_overview.png"
-       alt="Comparison between a fixed tool-integrated recommendation workflow and SimRec learning to search, ask, and recommend from simulated interaction"
-       width="92%">
+  <img src="assets/method_overview.png"
+       alt="SimRec multi-turn interaction, recommendation tool suite, and task-aligned GRPO training overview"
+       width="100%">
 </p>
 
 <p align="center"><em>
-Compared with a fixed tool-integrated recommendation workflow, SimRec learns to
-search, ask, and recommend from simulated interaction.
+The recommendation agent interacts with a user simulator and external tools,
+while task-aligned GRPO optimizes complete multi-turn trajectories.
 </em></p>
 
 Recommendation agents can retrieve products, inspect their attributes, ask a
@@ -108,17 +108,6 @@ the interaction. The corresponding Qwen3-4B figures are 18.09% and 21.20%.
 
 ## Method
 
-<p align="center">
-  <img src="assets/method_overview.png"
-       alt="SimRec multi-turn interaction, recommendation tool suite, and task-aligned GRPO training overview"
-       width="100%">
-</p>
-
-<p align="center"><em>
-The recommendation agent interacts with a user simulator and external tools,
-while task-aligned GRPO optimizes complete multi-turn trajectories.
-</em></p>
-
 Each task contains an initial shopping request, a current task need, a target
 set used only by the environment, and optionally a history-derived preference
 summary. At each step, the recommender observes the dialogue and prior tool
@@ -151,20 +140,6 @@ histories are deduplicated, chronologically ordered, filtered to remove the
 task target, and summarized once by an LLM before rollout. The runtime
 preference tool sees only that precomputed sentence, never raw history.
 
-### Optimization and retrieval protocol
-
-SimRec applies GRPO over complete interaction trajectories. Its reward combines
-final Hit@1, the maximum NDCG@100 among non-redundant *natural* searches, one
-valid use of each tool type, parseable recommendation format, and penalties for
-unchanged post-feedback queries and excessive turns. Invalid, failed, and
-redundant tool calls receive no tool-use credit.
-
-The paper configuration uses Qwen3-4B, Qwen3 Dense retrieval, Top-100 search
-results with Top-20 visible candidates, eight rollouts per task, learning rate
-`5e-7`, GRPO clipping `0.2`, KL coefficient `1e-3`, and an external
-Qwen3.6-Plus simulator at temperature `0.2`. During training only, target
-injection is eligible after two shopper turns when a target is absent from the
-visible list. It is disabled for validation and held-out test evaluation.
 
 ## Quick start
 
@@ -284,26 +259,14 @@ bash evaluation/evaluate_simrec.sh
 Set `EVAL_DATA` only when evaluating a different held-out JSONL split. Target
 injection is disabled automatically for these rollouts.
 
-## Split policy
-
-Use three different JSONL files: `TRAIN_DATA` is the only training input,
-`VAL_DATA` is the only split evaluated during training, and `TEST_DATA` remains
-held out. The launcher rejects overlapping files and never passes `TEST_DATA`
-to verl. `SAVE_FREQ=20` and `VALIDATION_FREQ=20` save a checkpoint and evaluate
-`VAL_DATA` every 20 steps; verl names the validation interval `trainer.test_freq`
-internally.
-
-The checked-in configuration matches the paper protocol: Qwen3-4B recommender, a natural top-100 retrieval list with the top 20 shown to the agent, and injection only in training after two shopper turns when the target is absent from those 20 candidates. Natural (uninjected) results alone determine retrieval reward. The external simulator defaults to Qwen3.6-Plus with temperature 0.2, 220 output tokens, and seed 42. GRPO uses eight rollouts, learning rate `5e-7`, temperature/top-p `1.0/1.0`, clipping `0.2`, and KL coefficient `1e-3`.
-
-Use the same retrieval model, index, simulator settings, seed, and task split for all compared checkpoints. The simulator and profile-LLM OpenAI-compatible requests both include the configured seed (42 by default).
 
 ## Repository layout
 
 | Path | Contents |
 |---|---|
-| [`src/SimRec/`](src/SimRec/) | Importable package: dataset adapters, agent loop, simulator, retrieval backend, GRPO reward, and data preparation commands. |
-| [`src/SimRec/tools/`](src/SimRec/tools/) | External-simulator tool runtime. |
-| [`src/SimRec/self_play/`](src/SimRec/self_play/) | Shared-parameter shopper/recommender rollout path. |
+| [`SimRec/`](SimRec/) | Importable package: dataset adapters, agent loop, simulator, retrieval backend, GRPO reward, and data preparation commands. |
+| [`SimRec/tools/`](SimRec/tools/) | External-simulator tool runtime. |
+| [`SimRec/self_play/`](SimRec/self_play/) | Shared-parameter shopper/recommender rollout path. |
 | [`configs/`](configs/) | Credential-free interaction, tool, and training configuration templates. |
 | [`experiments/`](experiments/) | Reproducibility map for paper settings, variants, and result records. |
 | [`evaluation/`](evaluation/) | Held-out evaluation launcher and protocol. |
@@ -314,30 +277,7 @@ Use the same retrieval model, index, simulator settings, seed, and task split fo
 | [`tests/`](tests/) | Public smoke-test scope; no private data or run artifacts. |
 | [`data/`](data/) | Tracked directory markers and expected locations for locally prepared data, indexes, and optional profiles. |
 
-## Reproducibility notes
 
-Use the same task split, retrieval index, retriever, simulator settings, and
-seed when comparing checkpoints. The default seed is 42 and is sent in the
-OpenAI-compatible simulator and profile-generation requests. Retrieval rewards
-and reported retrieval metrics always use natural, uninjected results.
-
-The interaction runtime implements the paper's prompt contracts: JSON-only tool
-calls, structured final recommendations, grounded product claims, no target-ID
-disclosure by the shopper, and on-demand preference access. All checked-in
-filesystem paths are repository-relative.
-
-## Scope and release hygiene
-
-This repository deliberately excludes local paths, user identifiers, raw datasets, models, retrieval indexes, checkpoints, logs, evaluation records, experiment trackers, and credentials. Before publishing, run the checks in the final section below and inspect `git status --ignored`.
-
-```bash
-python3 -m compileall -q src
-rg -n -i '(sk-|api[_-]?key=)' . --glob '!README.md'
-git status --short --ignored
-```
-
-The `rg` command should return no credential-like strings. Inspect configuration
-files before every release and never commit a credential.
 
 ## Citation
 

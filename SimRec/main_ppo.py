@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 
 _THIS_DIR = Path(__file__).resolve().parent
-_VERL_REPO_ROOT = Path(os.environ.get("VERL_REPO_ROOT", str(_THIS_DIR.parents[2] / "verl"))).resolve()
+_VERL_REPO_ROOT = Path(os.environ.get("VERL_REPO_ROOT", str(_THIS_DIR.parents[1] / "verl"))).resolve()
 if str(_VERL_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_VERL_REPO_ROOT))
 

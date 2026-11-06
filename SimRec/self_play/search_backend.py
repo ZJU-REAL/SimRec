@@ -5,7 +5,6 @@ import json
 import os
 import pickle
 import re
-import threading
 from collections import defaultdict
 from pathlib import Path
 from typing import Any
@@ -23,8 +22,6 @@ SEARCH_TAG_RE = re.compile(r"<search>(.*?)</search>", re.DOTALL)
 GET_ITEM_DETAILS_TAG_RE = re.compile(r"<get_item_details>(.*?)</get_item_details>", re.DOTALL)
 SENTENCE_SPLIT_RE = re.compile(r"[.!?;\n]+")
 MULTI_SPACE_RE = re.compile(r"\s+")
-# Public releases never assume a local profile corpus.  Supply one explicitly
-# with SIMREC_USER_PROFILE_PATH when the preference tool is enabled.
 COMMON_STOPWORDS = {
     "a",
     "an",
@@ -113,7 +110,9 @@ def _parse_tag_kwargs(action: str, pattern: re.Pattern[str]) -> tuple[dict[str, 
 
 
 def _load_search_config() -> dict[str, Any]:
-    cfg_path = Path(__file__).resolve().parents[2] / "configs" / "search.yaml"
+    # This module is nested one level deeper than the external-simulator
+    # backend: <repo>/SimRec/self_play/search_backend.py.
+    cfg_path = Path(__file__).resolve().parents[1] / "configs" / "search.yaml"
     cfg = yaml.safe_load(cfg_path.read_text(encoding="utf-8")) if cfg_path.exists() else {}
     cfg = cfg or {}
     cfg.setdefault("search", {})
@@ -146,10 +145,6 @@ def _load_search_config() -> dict[str, Any]:
         search_cfg["bm25_b"] = os.environ["SEARCH_BM25_B"]
     if os.environ.get("SEARCH_BM25_ESCAPE_LUCENE_SPECIALS"):
         search_cfg["bm25_escape_lucene_specials"] = os.environ["SEARCH_BM25_ESCAPE_LUCENE_SPECIALS"]
-    if os.environ.get("SEARCH_FUSION_CANDIDATE_K"):
-        search_cfg["fusion_candidate_k"] = os.environ["SEARCH_FUSION_CANDIDATE_K"]
-    if os.environ.get("SEARCH_DENSE_WEIGHT"):
-        search_cfg["dense_weight"] = os.environ["SEARCH_DENSE_WEIGHT"]
     return search_cfg
 
 
@@ -203,6 +198,15 @@ def _as_bool(value: Any, default: bool = False) -> bool:
     return str(value).strip().lower() in {"1", "true", "yes", "y", "on"}
 
 
+def _configured_search_modes() -> set[str]:
+    modes = {
+        os.environ.get("SIMREC_SEARCH_MODE", "hybrid"),
+        os.environ.get("SIMREC_RECALL_EXPANSION_MODE", "hybrid"),
+        os.environ.get("SIMREC_FINAL_RETRIEVAL_MODE", "hybrid"),
+    }
+    return {str(mode or "").strip().lower() for mode in modes if str(mode or "").strip()}
+
+
 def _format_lucene_query(query: str, field: str, *, escape_lucene_specials: bool = False) -> str:
     query = _clean_text(query)
     if escape_lucene_specials:
@@ -244,41 +248,6 @@ def _doc_content(doc: dict[str, Any]) -> str:
     return _clean_text(doc.get("contents") or doc.get("content") or doc.get("metadata") or doc.get("title") or doc.get("name"))
 
 
-def _minmax_scores(results: list[dict[str, Any]]) -> dict[str, float]:
-    scores = [float(item.get("score", 0.0) or 0.0) for item in results]
-    if not scores:
-        return {}
-    min_score = min(scores)
-    max_score = max(scores)
-    denom = max(max_score - min_score, 1e-12)
-    return {
-        _clean_text(item.get("id")).upper(): (float(item.get("score", 0.0) or 0.0) - min_score) / denom
-        for item in results
-        if _clean_text(item.get("id"))
-    }
-
-
-def _weighted_minmax_fusion(
-    bm25_results: list[dict[str, Any]],
-    dense_results: list[dict[str, Any]],
-    top_k: int,
-    *,
-    dense_weight: float,
-) -> list[dict[str, Any]]:
-    bm25_norm = _minmax_scores(bm25_results)
-    dense_norm = _minmax_scores(dense_results)
-    by_id = {
-        _clean_text(item.get("id")).upper(): item
-        for item in [*bm25_results, *dense_results]
-        if _clean_text(item.get("id"))
-    }
-    fused = []
-    for item_id, item in by_id.items():
-        score = (1.0 - dense_weight) * bm25_norm.get(item_id, 0.0) + dense_weight * dense_norm.get(item_id, 0.0)
-        fused.append({"id": item_id, "content": item.get("content", ""), "score": score, "type": "bm25_dense_weighted"})
-    return sorted(fused, key=lambda item: item["score"], reverse=True)[:top_k]
-
-
 class UniversalSearcher:
     _instance = None
 
@@ -286,109 +255,60 @@ class UniversalSearcher:
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._instance._initialized = False
-            cls._instance._encoder_lock = threading.Lock()
-            cls._instance._dense_index_lock = threading.Lock()
         return cls._instance
 
-    def __init__(
-        self,
-        index_dir: str,
-        model_path: str,
-        device: str = "cuda:0",
-        *,
-        bm25_index_dir: str = "",
-        bm25_field: str = "contents",
-        bm25_k1: float = 1.2,
-        bm25_b: float = 0.75,
-        bm25_escape_lucene_specials: bool = False,
-        fusion_candidate_k: int = 200,
-        dense_weight: float = 0.5,
-        encoder_backend: str = "flag",
-        query_instruction: str = "Represent this sentence for searching relevant products:",
-        torch_dtype: str = "auto",
-        device_map: str | None = None,
-        max_memory: dict | None = None,
-    ):
+    def __init__(self, index_dir: str, model_path: str, device: str = "cuda:0"):
         if self._initialized:
             return
         self.index_dir = index_dir
-        self.encoder_backend = (encoder_backend or "flag").lower()
-        self.query_instruction = query_instruction or ""
-        self.torch_dtype = torch_dtype or "auto"
-        self.device_map = device_map
-        self.max_memory = max_memory
-        self.low_cpu_mem_usage = _as_bool(SEARCH_CONFIG.get("low_cpu_mem_usage"), default=False)
-        self.max_length = int(SEARCH_CONFIG.get("max_length", 512))
+        self.encoder_backend = str(SEARCH_CONFIG.get("encoder_backend", "flag") or "flag").lower()
+        self.query_instruction = str(
+            SEARCH_CONFIG.get("query_instruction", "Represent this sentence for searching relevant products:") or ""
+        )
+        self.torch_dtype = str(SEARCH_CONFIG.get("torch_dtype", "auto") or "auto")
+        self.device_map = SEARCH_CONFIG.get("device_map")
+        self.low_cpu_mem_usage = str(SEARCH_CONFIG.get("low_cpu_mem_usage", "false")).lower() in {
+            "1",
+            "true",
+            "yes",
+            "y",
+            "on",
+        }
+        self.max_length = int(SEARCH_CONFIG.get("max_length", 512) or 512)
         self.tokenizer = None
-        self.bm25_index_dir = bm25_index_dir
-        self.bm25_field = bm25_field
-        self.bm25_k1 = float(bm25_k1)
-        self.bm25_b = float(bm25_b)
-        self.bm25_escape_lucene_specials = bool(bm25_escape_lucene_specials)
-        self.fusion_candidate_k = max(1, int(fusion_candidate_k))
-        self.dense_weight = min(1.0, max(0.0, float(dense_weight)))
+        self.bm25_index_dir = str(SEARCH_CONFIG.get("bm25_index_dir", "") or "")
+        self.bm25_field = str(SEARCH_CONFIG.get("bm25_field", "contents") or "contents")
+        self.bm25_k1 = float(SEARCH_CONFIG.get("bm25_k1", 1.2) or 1.2)
+        self.bm25_b = float(SEARCH_CONFIG.get("bm25_b", 0.75) or 0.75)
+        self.bm25_escape_lucene_specials = _as_bool(SEARCH_CONFIG.get("bm25_escape_lucene_specials"), default=False)
         self._bm25_searcher = None
         requested_device = _resolve_search_device(device)
         self.device = requested_device
-        self.model_path = model_path
+        self.bm25_only = _configured_search_modes() <= {"bm25"}
         self.model = None
         self.dense_index = None
+        if not self.bm25_only:
+            self.model = self._load_encoder(model_path)
+            self.dense_index = faiss.read_index(os.path.join(index_dir, "vector.index"))
+        if self.dense_index is not None and hasattr(self.dense_index, "nprobe"):
+            self.dense_index.nprobe = 16
 
-        metadata_path = os.path.join(index_dir, "metadata.pkl")
-        if os.path.exists(metadata_path):
-            with open(metadata_path, "rb") as f:
-                self.metadata = pickle.load(f)
-        else:
-            self.metadata = []
+        with open(os.path.join(index_dir, "metadata.pkl"), "rb") as f:
+            self.metadata = pickle.load(f)
         self.metadata_by_id = {}
         for item in self.metadata:
             if isinstance(item, dict):
                 item_id = _doc_id(item)
                 if item_id and item_id not in self.metadata_by_id:
                     self.metadata_by_id[item_id] = item
+
+        sparse_weights_path = os.path.join(index_dir, "sparse_weights.pkl")
         self.sparse_weights_list = None
-        self.inverted_index = None
-        self._initialized = True
-
-    def _ensure_metadata(self) -> None:
-        if not self.metadata:
-            raise FileNotFoundError(f"Missing metadata.pkl in search index directory: {self.index_dir}")
-
-    def _ensure_encoder(self) -> None:
-        if self.model is None:
-            with self._encoder_lock:
-                if self.model is None:
-                    self.model = self._load_encoder(self.model_path)
-
-    def _ensure_dense_index(self) -> None:
-        if self.dense_index is None:
-            with self._dense_index_lock:
-                if self.dense_index is None:
-                    vector_path = os.path.join(self.index_dir, "vector.index")
-                    if not os.path.exists(vector_path):
-                        raise FileNotFoundError(f"Missing dense vector index: {vector_path}")
-                    self.dense_index = faiss.read_index(vector_path)
-                    if hasattr(self.dense_index, "nprobe"):
-                        self.dense_index.nprobe = 16
-
-    def _ensure_dense(self) -> None:
-        self._ensure_metadata()
-        self._ensure_encoder()
-        self._ensure_dense_index()
-
-    def _ensure_sparse(self) -> None:
-        self._ensure_metadata()
-        self._ensure_encoder()
-        if self.sparse_weights_list is not None and self.inverted_index is not None:
-            return
-        sparse_weights_path = os.path.join(self.index_dir, "sparse_weights.pkl")
         if os.path.exists(sparse_weights_path):
             with open(sparse_weights_path, "rb") as f:
                 self.sparse_weights_list = pickle.load(f)
-        else:
-            self.sparse_weights_list = None
 
-        inverted_path = os.path.join(self.index_dir, "inverted_index.pkl")
+        inverted_path = os.path.join(index_dir, "inverted_index.pkl")
         if os.path.exists(inverted_path):
             with open(inverted_path, "rb") as f:
                 self.inverted_index = pickle.load(f)
@@ -401,6 +321,7 @@ class UniversalSearcher:
                     self.inverted_index[int(token_id)].append((doc_id, float(score)))
         else:
             self.inverted_index = defaultdict(list)
+        self._initialized = True
 
     def _load_encoder(self, model_path: str):
         if self.encoder_backend == "flag":
@@ -435,14 +356,9 @@ class UniversalSearcher:
                 "local_files_only": True,
                 "low_cpu_mem_usage": self.low_cpu_mem_usage,
             }
-            if target_dtype != "auto":
-                model_kwargs["torch_dtype"] = target_dtype
-            else:
-                model_kwargs["torch_dtype"] = "auto"
+            model_kwargs["torch_dtype"] = target_dtype if target_dtype != "auto" else "auto"
             if self.device_map:
                 model_kwargs["device_map"] = self.device_map
-                if self.max_memory:
-                    model_kwargs["max_memory"] = self.max_memory
             model = AutoModel.from_pretrained(model_path, **model_kwargs)
             target_device = torch.device(self.device if self.device.startswith("cuda") and torch.cuda.is_available() else "cpu")
             if not self.device_map:
@@ -461,20 +377,6 @@ class UniversalSearcher:
             return model
         raise ValueError(f"Unknown SEARCH_ENCODER_BACKEND={self.encoder_backend!r}. Use 'flag' or 'transformers'.")
 
-    def _get_bm25_searcher(self):
-        if self._bm25_searcher is None:
-            if not self.bm25_index_dir:
-                raise ValueError("BM25 index directory is not configured. Set search.bm25_index_dir or SEARCH_BM25_INDEX_DIR.")
-            from pyserini.search.lucene import LuceneSearcher
-
-            searcher = LuceneSearcher(self.bm25_index_dir)
-            searcher.set_bm25(self.bm25_k1, self.bm25_b)
-            self._bm25_searcher = searcher
-        return self._bm25_searcher
-
-    def get_item_record(self, item_id: str) -> dict[str, Any] | None:
-        return self.metadata_by_id.get(_clean_text(item_id).upper())
-
     def _format_query(self, query: str) -> str:
         query = _clean_text(query)
         if self.encoder_backend == "flag" or not self.query_instruction:
@@ -488,6 +390,8 @@ class UniversalSearcher:
         return hidden_states[torch.arange(batch_size, device=hidden_states.device), sequence_lengths]
 
     def _encode_dense_query(self, query: str) -> np.ndarray:
+        if self.model is None:
+            raise ValueError("Dense search is unavailable because this run is configured for BM25-only search.")
         if self.encoder_backend == "flag":
             q_output = self.model.encode_queries([query], return_dense=True)
             return np.ascontiguousarray(q_output["dense_vecs"], dtype=np.float32)
@@ -495,9 +399,8 @@ class UniversalSearcher:
         import torch.nn.functional as F
 
         assert self.tokenizer is not None
-        formatted = self._format_query(query)
         encoded = self.tokenizer(
-            [formatted],
+            [self._format_query(query)],
             padding=True,
             truncation=True,
             max_length=self.max_length,
@@ -514,28 +417,12 @@ class UniversalSearcher:
             embeddings = F.normalize(embeddings, p=2, dim=1)
         return np.ascontiguousarray(embeddings.detach().cpu().float().numpy(), dtype=np.float32)
 
-    def _encode_dense_queries(self, queries: list[str]) -> np.ndarray:
-        """Encode a query batch so the GPU does useful work per forward pass."""
-        self._ensure_dense()
-        if self.encoder_backend == "flag":
-            output = self.model.encode_queries(queries, return_dense=True)
-            return np.ascontiguousarray(output["dense_vecs"], dtype=np.float32)
-        import torch.nn.functional as F
-
-        assert self.tokenizer is not None
-        formatted = [self._format_query(query) for query in queries]
-        encoded = self.tokenizer(formatted, padding=True, truncation=True, max_length=self.max_length, return_tensors="pt")
-        input_device = next(self.model.parameters()).device
-        encoded = {key: value.to(input_device) for key, value in encoded.items()}
-        with torch.no_grad():
-            output = self.model(**encoded)
-            embeddings = self._last_token_pool(output.last_hidden_state, encoded["attention_mask"])
-            embeddings = F.normalize(embeddings, p=2, dim=1)
-        return np.ascontiguousarray(embeddings.detach().cpu().float().numpy(), dtype=np.float32)
+    def get_item_record(self, item_id: str) -> dict[str, Any] | None:
+        return self.metadata_by_id.get(_clean_text(item_id).upper())
 
     def search_dense(self, query: str, top_k: int = 10) -> list[dict[str, Any]]:
-        self._ensure_dense()
-        assert self.dense_index is not None
+        if self.dense_index is None:
+            raise ValueError("Dense search is unavailable because this run is configured for BM25-only search.")
         q_dense = self._encode_dense_query(query)
         faiss.normalize_L2(q_dense)
         scores, indices = self.dense_index.search(q_dense, top_k)
@@ -545,27 +432,24 @@ class UniversalSearcher:
                 continue
             results.append(
                 {
-                    "id": _doc_id(self.metadata[idx]),
-                    "content": _doc_content(self.metadata[idx]),
+                    "id": self.metadata[idx]["id"],
+                    "content": self.metadata[idx]["contents"],
                     "score": float(scores[0][j]),
                     "type": "dense",
                 }
             )
         return results
 
-    def search_dense_batch(self, queries: list[str], top_k: int = 10) -> list[list[dict[str, Any]]]:
-        self._ensure_dense()
-        assert self.dense_index is not None
-        q_dense = self._encode_dense_queries(queries)
-        faiss.normalize_L2(q_dense)
-        scores, indices = self.dense_index.search(q_dense, top_k)
-        return [
-            [
-                {"id": _doc_id(self.metadata[idx]), "content": _doc_content(self.metadata[idx]), "score": float(scores[row][j]), "type": "dense"}
-                for j, idx in enumerate(row_indices) if idx != -1
-            ]
-            for row, row_indices in enumerate(indices)
-        ]
+    def _get_bm25_searcher(self):
+        if self._bm25_searcher is None:
+            if not self.bm25_index_dir:
+                raise ValueError("BM25 index directory is not configured. Set SEARCH_BM25_INDEX_DIR.")
+            from pyserini.search.lucene import LuceneSearcher
+
+            searcher = LuceneSearcher(self.bm25_index_dir)
+            searcher.set_bm25(self.bm25_k1, self.bm25_b)
+            self._bm25_searcher = searcher
+        return self._bm25_searcher
 
     def search_bm25(self, query: str, top_k: int = 10) -> list[dict[str, Any]]:
         lucene_query = _format_lucene_query(
@@ -591,10 +475,8 @@ class UniversalSearcher:
         return results
 
     def search_sparse(self, query: str, top_k: int = 10) -> list[dict[str, Any]]:
-        self._ensure_sparse()
         if self.encoder_backend != "flag" or self.sparse_weights_list is None:
             raise ValueError("Sparse search requires a FlagEmbedding index with sparse_weights.pkl.")
-        assert self.inverted_index is not None
         q_output = self.model.encode_queries([query], return_sparse=True, return_dense=False)
         q_sparse = q_output["lexical_weights"][0]
         doc_scores = defaultdict(float)
@@ -605,8 +487,8 @@ class UniversalSearcher:
         sorted_docs = sorted(doc_scores.items(), key=lambda x: x[1], reverse=True)[:top_k]
         return [
             {
-                "id": _doc_id(self.metadata[doc_id]),
-                "content": _doc_content(self.metadata[doc_id]),
+                "id": self.metadata[doc_id]["id"],
+                "content": self.metadata[doc_id]["contents"],
                 "score": float(score),
                 "type": "sparse",
             }
@@ -614,11 +496,8 @@ class UniversalSearcher:
         ]
 
     def search_hybrid(self, query: str, top_k: int = 10, alpha: float = 0.3) -> list[dict[str, Any]]:
-        self._ensure_sparse()
         if self.encoder_backend != "flag" or self.sparse_weights_list is None:
             return self.search_dense(query, top_k)
-        self._ensure_dense_index()
-        assert self.dense_index is not None
         q_output = self.model.encode_queries([query], return_dense=True, return_sparse=True)
         q_dense = np.ascontiguousarray(q_output["dense_vecs"], dtype=np.float32)
         faiss.normalize_L2(q_dense)
@@ -638,8 +517,8 @@ class UniversalSearcher:
                     s_score += q_val * doc_sparse_vec[token_id]
             candidates.append(
                 {
-                    "id": _doc_id(self.metadata[doc_idx]),
-                    "content": _doc_content(self.metadata[doc_idx]),
+                    "id": self.metadata[doc_idx]["id"],
+                    "content": self.metadata[doc_idx]["contents"],
                     "score": d_score + alpha * s_score,
                     "type": "hybrid",
                 }
@@ -647,49 +526,13 @@ class UniversalSearcher:
         candidates.sort(key=lambda x: x["score"], reverse=True)
         return candidates[:top_k]
 
-    def search_bm25_dense_weighted(self, query: str, top_k: int = 10) -> list[dict[str, Any]]:
-        candidate_k = max(top_k, self.fusion_candidate_k)
-        bm25_results = self.search_bm25(query, candidate_k)
-        dense_results = self.search_dense(query, candidate_k)
-        return _weighted_minmax_fusion(
-            bm25_results,
-            dense_results,
-            top_k,
-            dense_weight=self.dense_weight,
-        )
-
-    def search_bm25_dense_weighted_batch(self, queries: list[str], top_k: int = 10) -> list[list[dict[str, Any]]]:
-        candidate_k = max(top_k, self.fusion_candidate_k)
-        bm25_results = [self.search_bm25(query, candidate_k) for query in queries]
-        dense_results = self.search_dense_batch(queries, candidate_k)
-        return [
-            _weighted_minmax_fusion(bm25, dense, top_k, dense_weight=self.dense_weight)
-            for bm25, dense in zip(bm25_results, dense_results, strict=True)
-        ]
-
 
 class SearchBackend:
     def __init__(self, index_dir: str | None = None, model_path: str | None = None, device: str | None = None):
         index_dir = index_dir or SEARCH_CONFIG.get("index_dir", "")
         model_path = model_path or SEARCH_CONFIG.get("model_path", "")
         device = _resolve_search_device(device or SEARCH_CONFIG.get("device", "cuda:0"))
-        self.searcher = UniversalSearcher(
-            index_dir=index_dir,
-            model_path=model_path,
-            device=device,
-            bm25_index_dir=str(SEARCH_CONFIG.get("bm25_index_dir", "")),
-            bm25_field=str(SEARCH_CONFIG.get("bm25_field", "contents")),
-            bm25_k1=float(SEARCH_CONFIG.get("bm25_k1", 1.2)),
-            bm25_b=float(SEARCH_CONFIG.get("bm25_b", 0.75)),
-            bm25_escape_lucene_specials=_as_bool(SEARCH_CONFIG.get("bm25_escape_lucene_specials"), default=False),
-            fusion_candidate_k=int(SEARCH_CONFIG.get("fusion_candidate_k", 200)),
-            dense_weight=float(SEARCH_CONFIG.get("dense_weight", 0.5)),
-            encoder_backend=str(SEARCH_CONFIG.get("encoder_backend", "flag")),
-            query_instruction=str(SEARCH_CONFIG.get("query_instruction", "")),
-            torch_dtype=str(SEARCH_CONFIG.get("torch_dtype", "auto")),
-            device_map=SEARCH_CONFIG.get("device_map"),
-            max_memory=SEARCH_CONFIG.get("max_memory") if isinstance(SEARCH_CONFIG.get("max_memory"), dict) else None,
-        )
+        self.searcher = UniversalSearcher(index_dir=index_dir, model_path=model_path, device=device)
 
     @staticmethod
     def parse_search_action(action: str) -> tuple[dict[str, Any], bool]:
@@ -705,8 +548,8 @@ class SearchBackend:
         kwargs["item_id"] = item_id
         return kwargs, True
 
-    def search_records(self, query: str, top_k: int = 5, mode: str = "bm25_dense_weighted") -> list[dict[str, Any]]:
-        mode = (mode or "bm25_dense_weighted").lower()
+    def search_records(self, query: str, top_k: int = 5, mode: str = "hybrid") -> list[dict[str, Any]]:
+        mode = (mode or "hybrid").lower()
         if mode == "bm25":
             return self.searcher.search_bm25(query, top_k)
         if mode == "dense":
@@ -715,30 +558,19 @@ class SearchBackend:
             return self.searcher.search_sparse(query, top_k)
         if mode == "hybrid":
             return self.searcher.search_hybrid(query, top_k)
-        if mode == "bm25_dense_weighted":
-            return self.searcher.search_bm25_dense_weighted(query, top_k)
-        raise ValueError(f"Unknown mode '{mode}'. Use 'bm25', 'dense', 'sparse', 'hybrid', or 'bm25_dense_weighted'.")
-
-    def search_records_batch(self, queries: list[str], top_k: int = 5, mode: str = "bm25_dense_weighted") -> list[list[dict[str, Any]]]:
-        mode = (mode or "bm25_dense_weighted").lower()
-        if mode == "dense":
-            return self.searcher.search_dense_batch(queries, top_k)
-        if mode == "bm25_dense_weighted":
-            return self.searcher.search_bm25_dense_weighted_batch(queries, top_k)
-        return [self.search_records(query, top_k, mode) for query in queries]
+        raise ValueError(f"Unknown mode '{mode}'. Use 'bm25', 'dense', 'sparse', or 'hybrid'.")
 
     @staticmethod
-    def render_search_results(results: list[dict[str, Any]], *, content_limit: int | None = None) -> str:
+    def render_search_results(results: list[dict[str, Any]]) -> str:
         if not results:
             return "No relevant products found."
 
-        if content_limit is None:
-            content_limit = int(os.environ.get("SIMREC_SEARCH_RESULT_MAX_CHARS", "300"))
-        content_limit = max(40, content_limit)
         lines = []
         for idx, item in enumerate(results):
-            content = _compact_text(item.get("content", ""), limit=content_limit)
-            lines.append(f"[{idx + 1}] ID: {item['id']} | Score: {item['score']:.4f} | {content}")
+            content = _compact_text(item.get("content", ""), limit=300)
+            lines.append(
+                f"[{idx + 1}] ID: {item['id']} | Mode: {item['type']} | Score: {item['score']:.4f} | Content: {content}"
+            )
         return "\n".join(lines)
 
     @staticmethod
@@ -798,5 +630,5 @@ class SearchBackend:
             )
         return self._summarize_item_record(item_id, record), True
 
-    def search(self, query: str, top_k: int = 5, mode: str = "bm25_dense_weighted") -> str:
+    def search(self, query: str, top_k: int = 5, mode: str = "hybrid") -> str:
         return self.render_search_results(self.search_records(query=query, top_k=top_k, mode=mode))

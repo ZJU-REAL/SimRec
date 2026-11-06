@@ -8,7 +8,7 @@ private dataset, live API credential, local checkpoint, or personal path.
 The lightweight release checks are:
 
 ```bash
-python3 -m compileall -q src
+python3 -m compileall -q SimRec
 bash -n scripts/train_simrec.sh
 bash -n evaluation/evaluate_simrec.sh
 git diff --check

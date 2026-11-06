@@ -50,7 +50,7 @@ gpu_list=${CUDA_VISIBLE_DEVICES:-0}
 gpu_count=$(awk -F, '{print NF}' <<<"${gpu_list// /}")
 export N_GPUS_PER_NODE=${N_GPUS_PER_NODE:-$gpu_count}
 export VERL_REPO_ROOT=${VERL_REPO_ROOT:-"$workspace_dir/verl"}
-export PYTHONPATH="$repo_dir/src:$VERL_REPO_ROOT:${PYTHONPATH:-}"
+export PYTHONPATH="$repo_dir:$VERL_REPO_ROOT:${PYTHONPATH:-}"
 
 strategy=${STRATEGY:-fsdp}
 use_dynamic_bsz=${USE_DYNAMIC_BSZ:-False}
@@ -114,15 +114,15 @@ fi
 mode=${SIMREC_USER_SIMULATOR_MODE:-external}
 case "$mode" in
   self_play|self-play|selfplay)
-    dataset_path=src/SimRec/self_play/dataset.py
-    reward_path=src/SimRec/self_play/reward_manager.py
+    dataset_path=SimRec/self_play/dataset.py
+    reward_path=SimRec/self_play/reward_manager.py
     tool_config=${TOOL_CONFIG_FILE:-"$repo_dir/configs/tool_config/self_play_tools.yaml"}
     interaction_config=${INTERACTION_CONFIG_FILE:-"$repo_dir/configs/interaction_config/self_play_user.yaml"}
     agent_loop=simrec_self_play_tool_agent
     ;;
   external|api|llm)
-    dataset_path=src/SimRec/dataset.py
-    reward_path=src/SimRec/reward_manager.py
+    dataset_path=SimRec/dataset.py
+    reward_path=SimRec/reward_manager.py
     tool_config=${TOOL_CONFIG_FILE:-"$repo_dir/configs/tool_config/external_tools.yaml"}
     interaction_config=${INTERACTION_CONFIG_FILE:-"$repo_dir/configs/interaction_config/external_user.yaml"}
     agent_loop=simrec_tool_agent
