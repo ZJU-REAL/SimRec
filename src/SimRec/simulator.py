@@ -86,48 +86,6 @@ def _build_fallback_initial_user_utterance(reference_query: str) -> str:
     return "I'm looking for a product that fits my needs."
 
 
-class HeuristicUserSimulator:
-    """Minimal compatibility shim for the legacy environment path."""
-
-    def __init__(self, seed: int = 42):
-        self.seed = seed
-
-    def start_episode(self, sample: dict[str, Any], initial_user_utterance: str | None = None) -> UserSession:
-        opener = clean_text(initial_user_utterance) or _build_fallback_initial_user_utterance(
-            sample.get("reference_query", ""),
-        )
-        return UserSession(
-            qid=str(sample.get("qid", "0")),
-            reference_query=clean_text(sample.get("reference_query", "")),
-            initial_user_utterance=opener,
-        )
-
-    def answer_question(self, session: UserSession, question: str) -> str:
-        del question
-        session.turn_index += 1
-        return "I mainly care that it matches what I'm looking for."
-
-    def respond_to_recommendation(
-        self,
-        session: UserSession,
-        rec_text: str,
-        recommended_item_ids: list[str] | None = None,
-        grounded: bool = False,
-    ) -> dict[str, Any]:
-        session.recommendation_attempts += 1
-        del recommended_item_ids, grounded
-        rec_text = clean_text(rec_text)
-        if rec_text:
-            session.accepted = True
-            session.done = True
-            return {"user_reply": "That sounds right for me. I'd go with that one.", "accepted": True, "done": True}
-        return {
-            "user_reply": "I still need a concrete product suggestion, not just a general description.",
-            "accepted": False,
-            "done": False,
-        }
-
-
 class LLMUserSimulator:
     """User simulator backed by an OpenAI-compatible chat completion endpoint."""
 

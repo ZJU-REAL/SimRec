@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Run a held-out SimRec evaluation without an optimizer step.
+# See evaluation/README.md for the split and checkpoint protocol.
 set -euo pipefail
 
 repo_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)

@@ -2,8 +2,6 @@ from __future__ import annotations
 
 import json
 import os
-import pickle
-from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -11,9 +9,6 @@ import torch
 from torch.utils.data import Dataset
 
 from SimRec.simulator import clean_text
-
-
-DEFAULT_METADATA_PATH = Path(__file__).resolve().parents[2] / "data/indexes/qwen3_embedding_amazon_1M/metadata.pkl"
 
 
 REC_SYSTEM_PROMPT_WITH_USER_PREFERENCE = (
@@ -120,40 +115,6 @@ def build_rec_system_prompt() -> str:
 
 def build_rollout_messages() -> list[dict[str, str]]:
     return [{"role": "system", "content": build_rec_system_prompt()}]
-
-
-def _metadata_path() -> Path:
-    configured = os.environ.get("SIMREC_METADATA_PKL")
-    return Path(configured).expanduser() if configured else DEFAULT_METADATA_PATH
-
-
-@lru_cache(maxsize=2)
-def _load_category_by_item(metadata_path: str) -> dict[str, str]:
-    path = Path(metadata_path).expanduser()
-    if not path.exists():
-        return {}
-    with path.open("rb") as f:
-        payload = pickle.load(f)
-    rows = payload.values() if isinstance(payload, dict) else payload
-    category_by_item: dict[str, str] = {}
-    if not isinstance(rows, list) and not hasattr(rows, "__iter__"):
-        return category_by_item
-    for row in rows:
-        if not isinstance(row, dict):
-            continue
-        raw = row.get("raw") if isinstance(row.get("raw"), dict) else {}
-        item_id = clean_text(row.get("id") or row.get("item_id") or raw.get("item_id")).upper()
-        category = clean_text(row.get("category") or row.get("main_category") or raw.get("category"))
-        if item_id and category:
-            category_by_item[item_id] = category
-    return category_by_item
-
-
-def target_category_from_metadata(target_item_id: Any) -> str:
-    item_id = clean_text(target_item_id).upper()
-    if not item_id:
-        return ""
-    return _load_category_by_item(str(_metadata_path())).get(item_id, "")
 
 
 def _normalize_target_item_ids(sample: dict[str, Any]) -> list[str]:

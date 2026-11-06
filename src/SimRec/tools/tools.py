@@ -403,7 +403,10 @@ class SimRecItemDetailsTool(BaseTool):
         state = ensure_simrec_state(agent_data.extra_fields)
         state["details_invoked_count"] = int(state.get("details_invoked_count", 0)) + 1
         state["last_viewed_item_id"] = item_id if found else None
-        state["must_recommend_next"] = True
+        # Candidate inspection supplies evidence but does not prescribe the
+        # next action. The learned policy may inspect, retrieve, ask, access a
+        # preference profile, or recommend.
+        state["must_recommend_next"] = False
 
         tool_bonus = VALID_ITEM_DETAILS_BONUS if found else 0.0
         reward = tool_bonus

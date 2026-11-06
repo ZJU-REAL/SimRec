@@ -10,6 +10,7 @@ configs/*.env
 data/**
 !data/**/
 !data/**/.gitkeep
+!data/README.md
 checkpoints/
 logs/
 outputs/
@@ -18,7 +19,7 @@ ray_results/
 ray_tmp/
 verl_step_records/
 eval_results/
-analysis/
+analysis/outputs/
 
 # Python and editor artifacts
 __pycache__/
