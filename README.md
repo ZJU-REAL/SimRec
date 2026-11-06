@@ -94,18 +94,6 @@ to the full interaction policy. Values are percentages from the paper.
 | without item-detail tool | 23.42 | 6.04 |
 | without multi-turn feedback | 22.14 | 8.06 |
 
-### Recovery after rejection
-
-<p align="center">
-  <img src="assets/recovery_analysis.png"
-       alt="ESCI Hit@1 comparison between first and final recommendations for Qwen3-4B and SimRec-4B"
-       width="38%">
-</p>
-
-On ESCI, both policies can revise an initial miss after feedback, while SimRec
-improves Hit@1 from 20.64% on the first recommendation to 24.08% at the end of
-the interaction. The corresponding Qwen3-4B figures are 18.09% and 21.20%.
-
 ## Method
 
 Each task contains an initial shopping request, a current task need, a target
