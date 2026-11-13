@@ -1,0 +1,670 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1" name="viewport" />
+    <title>SimRec | Learning to Search, Ask, and Recommend from Simulated Interaction</title>
+    <meta
+      content="SimRec trains a tool-integrated recommendation agent end to end with GRPO against a task-anchored simulated shopper."
+      name="description"
+    />
+    <meta content="#f5f6fa" name="theme-color" />
+    <meta content="light" name="color-scheme" />
+    <link href="assets/favicon.svg" rel="icon" type="image/svg+xml" />
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin href="https://fonts.gstatic.com" rel="preconnect" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link href="style.css" rel="stylesheet" />
+    <script>
+      document.documentElement.classList.add("js");
+    </script>
+    <script defer src="script.js"></script>
+  </head>
+  <body>
+    <a class="sr-skip" href="#main">Skip to content</a>
+
+    <header class="sr-nav">
+      <div class="sr-nav-bar">
+        <a class="sr-logo" href="#top">
+          <svg aria-hidden="true" viewBox="0 0 28 28">
+            <path class="b1" d="M4 7.5A4.5 4.5 0 0 1 8.5 3h8A4.5 4.5 0 0 1 21 7.5v4a4.5 4.5 0 0 1-4.5 4.5H11l-4.2 3.3c-.5.4-1.3 0-1.3-.6V15.6A4.5 4.5 0 0 1 4 12Z" />
+            <path class="b2" d="M24 13.5v3a4 4 0 0 1-1.6 3.2v3.1c0 .5-.6.8-1 .5L18 21h-3.5a4 4 0 0 1-3.6-2.2" />
+          </svg>
+          SimRec
+        </a>
+        <nav aria-label="Main navigation">
+          <a href="#method">Method</a>
+          <a href="#how">How it works</a>
+          <a href="#results">Results</a>
+          <a href="#takeaways">Takeaways</a>
+        </nav>
+        <a class="sr-nav-code" href="https://github.com/ZJU-REAL/SimRec">
+          <svg aria-hidden="true" viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38v-1.34c-2.23.48-2.7-1.07-2.7-1.07-.36-.92-.89-1.17-.89-1.17-.73-.5.06-.49.06-.49.8.06 1.23.83 1.23.83.72 1.22 1.87.87 2.33.66.07-.52.28-.87.5-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.83-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48v2.2c0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z" /></svg>
+          Code
+        </a>
+      </div>
+    </header>
+
+    <main id="main">
+      <!-- ============================== Hero ============================== -->
+      <section class="sr-hero" id="top">
+        <div class="sr-wrap sr-hero-grid">
+          <div class="sr-hero-copy">
+            <p class="sr-badge"><i aria-hidden="true"></i>Recommendation agents · Reinforcement learning</p>
+            <h1>Sim<span>Rec</span></h1>
+            <p class="sr-hero-sub">
+              Learning to
+              <span class="sr-verb rec">Search</span><span class="sr-comma">,</span>
+              <span class="sr-verb user">Ask</span><span class="sr-comma">,</span> and
+              <span class="sr-verb hit">Recommend</span>
+              from Simulated Interaction
+            </p>
+            <p class="sr-hero-lede">
+              One tool-integrated policy decides when to retrieve, inspect, ask, and recommend, trained end to end
+              with GRPO against a task-anchored simulated shopper.
+            </p>
+            <div class="sr-cta">
+              <a class="sr-btn dark" href="https://github.com/ZJU-REAL/SimRec">
+                <svg aria-hidden="true" viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38v-1.34c-2.23.48-2.7-1.07-2.7-1.07-.36-.92-.89-1.17-.89-1.17-.73-.5.06-.49.06-.49.8.06 1.23.83 1.23.83.72 1.22 1.87.87 2.33.66.07-.52.28-.87.5-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.83-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48v2.2c0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z" /></svg>
+                View the code
+              </a>
+              <a class="sr-btn ghost" href="#method">See the method</a>
+            </div>
+            <p class="sr-anon">Anonymous release · paper under double-blind review</p>
+          </div>
+
+          <div class="sr-device" aria-label="Example shopping conversation" role="img">
+            <div class="sr-device-top">
+              <span class="sr-avatar" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><rect x="4.5" y="7.5" width="15" height="11.5" rx="4" /><path d="M12 7.5V4.6" /><circle cx="12" cy="3.6" r="1.3" /><circle cx="9.3" cy="13" r="1.25" /><circle cx="14.7" cy="13" r="1.25" /></svg>
+              </span>
+              <div>
+                <b>Shopping assistant</b>
+                <small><i aria-hidden="true"></i>SimRec-4B · talking to a simulated shopper</small>
+              </div>
+            </div>
+            <div class="sr-thread" data-sr-thread aria-hidden="true">
+              <div class="sr-b user">I’m looking for a smart LED bulb.</div>
+              <div class="sr-call"><span>search_products</span>query="smart LED bulb" <em>Top-20 of 100 visible</em></div>
+              <div class="sr-cands">
+                <span class="sr-pc"><i></i><b></b><b class="s"></b></span>
+                <span class="sr-pc focus"><i></i><code>BX1MMKHT</code><b class="s"></b></span>
+                <span class="sr-pc"><i></i><b></b><b class="s"></b></span>
+              </div>
+              <div class="sr-call"><span>get_item_details</span>item_id="BX1MMKHT"</div>
+              <div class="sr-b rec card"><span class="sr-pick">Recommendation</span><code>recommended_item_id: …</code></div>
+              <div class="sr-b user">No, I need dedicated white LEDs.</div>
+              <div class="sr-call replan"><span>re-plan</span>search again · inspect · ask</div>
+              <div class="sr-b rec card ok"><span class="sr-pick">Recommendation</span><code>recommended_item_id: …</code><em>✓ in target set</em></div>
+            </div>
+            <div class="sr-device-input" aria-hidden="true"><span>Simulated shopper is replying…</span><i></i></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================= The idea ========================= -->
+      <section class="sr-section sr-idea" id="story">
+        <div class="sr-wrap">
+          <header class="sr-head center reveal">
+            <p class="sr-label-pill">The idea</p>
+            <h2>
+              Don’t script the recommender’s workflow.
+              <span class="c-rec">Train the whole interaction</span> against a
+              <span class="c-user">simulated shopper</span>.
+            </h2>
+          </header>
+
+          <div class="sr-compare">
+            <article class="sr-cmp before reveal">
+              <p class="sr-cmp-tag">Typical recommender agent</p>
+              <h3>A hand-written workflow</h3>
+              <ol class="sr-fixed" aria-label="Fixed action order">
+                <li>search</li>
+                <li>inspect</li>
+                <li>recommend</li>
+              </ol>
+              <p>The order of retrieval, inspection, clarification, and recommendation is fixed in advance.</p>
+            </article>
+            <article class="sr-cmp after reveal">
+              <p class="sr-cmp-tag">SimRec</p>
+              <h3>A learned interaction policy</h3>
+              <ul class="sr-choices" aria-label="Actions the policy chooses from at every turn">
+                <li class="rec">search_products</li>
+                <li class="rec">get_item_details</li>
+                <li class="rec">get_user_preference</li>
+                <li class="user">ask the shopper</li>
+                <li class="hit">recommend</li>
+              </ul>
+              <p>At every turn one policy picks the next action, and it can revise after a rejection.</p>
+            </article>
+          </div>
+
+          <p class="sr-lede reveal">
+            Recommendation agents can retrieve products, inspect their attributes, ask a shopper for clarification,
+            and revise after rejection. In many systems the order of these actions is a hand-written workflow.
+            <strong>SimRec</strong> trains the complete, tool-integrated interaction policy with GRPO: a task-anchored
+            simulated shopper gives feedback during the interaction, and a trajectory-level reward credits natural
+            retrieval, grounded tool use, and the final recommendation.
+          </p>
+        </div>
+      </section>
+
+      <!-- ======================== Animated method figure ======================== -->
+      <section class="sr-section sr-method" id="method">
+        <div class="sr-wrap">
+          <header class="sr-head reveal">
+            <p class="sr-label-pill">Method</p>
+            <h2>One episode, from first request to policy update.</h2>
+            <p>
+              The agent searches, inspects, and asks; the shopper rejects and the agent revises; then GRPO learns
+              from complete multi-turn trajectories.
+            </p>
+          </header>
+        </div>
+
+        <figure class="sr-fig reveal" data-sr>
+          <div class="sr-window">
+            <div class="sr-toolbar">
+              <p class="sr-tb-title"><i aria-hidden="true"></i>simrec · episode replay</p>
+              <div class="sr-controls">
+                <div aria-label="Show one phase" class="sr-tabs" role="group">
+                  <button class="ph1" data-sr-phase="1" type="button"><b>1</b> Search<i></i></button>
+                  <button class="ph2" data-sr-phase="2" type="button"><b>2</b> Ask &amp; revise<i></i></button>
+                  <button class="ph3" data-sr-phase="3" type="button"><b>3</b> Learn<i></i></button>
+                </div>
+                <button aria-label="Pause animation" class="sr-play" data-sr-play type="button">
+                  <svg aria-hidden="true" class="i-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14" /></svg>
+                  <svg aria-hidden="true" class="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z" /></svg>
+                </button>
+              </div>
+            </div>
+            <div class="sr-legend" aria-label="Token types">
+              <span class="sr-lg user"><i></i>User tokens</span>
+              <span class="sr-lg rec"><i></i>Rec tokens</span>
+              <span class="sr-lg obs"><i></i>Observation</span>
+              <span class="sr-lg hit"><i></i>Recommend</span>
+            </div>
+
+            <div class="sr-stage" data-sr-stage>
+              <svg aria-hidden="true" class="sr-wires" data-sr-wires></svg>
+
+              <!-- Multi-turn interaction -->
+              <section aria-label="Multi-turn interaction" class="sr-panel sr-ep" data-sr-panel="1 2">
+                <header class="sr-ph">
+                  <h3>Multi-turn interaction</h3>
+                  <div class="sr-agents">
+                    <span class="sr-agent rec" data-sr-a="rec">
+                      <svg aria-hidden="true" viewBox="0 0 24 24"><rect x="4.5" y="7.5" width="15" height="11.5" rx="4" /><path d="M12 7.5V4.6" /><circle cx="12" cy="3.6" r="1.3" /><circle class="eye" cx="9.3" cy="13" r="1.25" /><circle class="eye" cx="14.7" cy="13" r="1.25" /></svg>
+                      Rec agent
+                    </span>
+                    <span class="sr-agent user" data-sr-a="user">
+                      <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="4" /><path d="M4.5 20c.8-4 3.9-6 7.5-6s6.7 2 7.5 6" /></svg>
+                      UserSim agent
+                    </span>
+                  </div>
+                </header>
+
+                <ol class="sr-chat">
+                  <li class="sr-msg user" data-n="4" data-p="1" data-s="1">
+                    <span class="sr-who">Shopper · request</span>
+                    <p>I’m looking for a smart LED bulb.</p>
+                  </li>
+                  <li class="sr-msg rec" data-n="3" data-p="1" data-s="2" data-tool="search">
+                    <span class="sr-who">Rec · search</span>
+                    <code>search_products(query="smart LED bulb")</code>
+                  </li>
+                  <li class="sr-msg obs" data-n="5" data-p="1" data-s="3" data-ret="search">
+                    <span class="sr-who">Observation</span>
+                    <p>Ranked Top-100 results; the Top-20 are visible.</p>
+                  </li>
+                  <li class="sr-msg rec" data-n="3" data-p="1" data-s="4" data-tool="detail">
+                    <span class="sr-who">Rec · inspect</span>
+                    <code>get_item_details(item_id="BX1MMKHT")</code>
+                  </li>
+                  <li class="sr-msg obs" data-n="4" data-p="1" data-s="5" data-ret="detail">
+                    <span class="sr-who">Observation</span>
+                    <p>Full grounded metadata: title · brand · price …</p>
+                  </li>
+                  <li class="sr-msg rec" data-n="2" data-p="1" data-s="6" data-tool="pref">
+                    <span class="sr-who">Rec · preference</span>
+                    <code>get_user_preference()</code>
+                  </li>
+                  <li class="sr-msg obs" data-n="3" data-p="1" data-s="7" data-ret="pref">
+                    <span class="sr-who">Observation</span>
+                    <p>“The user prefers high-quality …”</p>
+                  </li>
+                  <li class="sr-msg rec" data-n="2" data-p="2" data-s="1" data-ask>
+                    <span class="sr-who">Rec · clarify</span>
+                    <p><i>asks the shopper a clarification question</i></p>
+                  </li>
+                  <li class="sr-msg user" data-n="2" data-p="2" data-s="2">
+                    <span class="sr-who">Shopper</span>
+                    <p><i>clarifies the request</i></p>
+                  </li>
+                  <li class="sr-msg hit" data-n="2" data-p="2" data-s="3">
+                    <span class="sr-who">Rec · recommend</span>
+                    <code>recommended_item_id: …</code>
+                    <span class="sr-verdict bad">not in target set</span>
+                  </li>
+                  <li class="sr-msg user" data-n="3" data-p="2" data-s="4" data-reject>
+                    <span class="sr-who">Shopper · feedback</span>
+                    <p>“No, I need dedicated white LEDs.”</p>
+                  </li>
+                  <li class="sr-msg rec" data-n="3" data-p="2" data-s="5">
+                    <span class="sr-who">Rec · update &amp; re-plan</span>
+                    <p><i>search again, inspect, consult preferences, or ask</i></p>
+                  </li>
+                  <li class="sr-msg hit" data-n="2" data-p="2" data-s="6" data-sr-a="final">
+                    <span class="sr-who">Rec · recommend</span>
+                    <code>recommended_item_id: …</code>
+                    <span class="sr-verdict good">✓ in target set</span>
+                  </li>
+                </ol>
+
+                <div class="sr-strip" data-sr-a="strip">
+                  <span class="sr-strip-label">This trajectory as tokens</span>
+                  <div class="sr-toks" data-sr-strip></div>
+                </div>
+              </section>
+
+              <!-- Recommendation tool suite -->
+              <section aria-label="Recommendation tool suite" class="sr-panel sr-tools" data-sr-panel="1">
+                <header class="sr-ph">
+                  <h3>Recommendation tool suite</h3>
+                </header>
+                <div class="sr-tool" data-sr-tool="search">
+                  <h4>
+                    <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6" /><path d="M15 15l5 5" /></svg>
+                    Product search <code>search_products</code>
+                  </h4>
+                  <div class="sr-chips" aria-label="Retrievers">
+                    <span>Sparse</span><span class="on">Dense</span><span>Hybrid</span>
+                  </div>
+                  <div class="sr-src">
+                    <span>Retrieval index</span>
+                    <i aria-hidden="true">↑</i>
+                    <span>Product corpus <small>title · brand · price</small></span>
+                  </div>
+                </div>
+                <div class="sr-tool" data-sr-tool="detail">
+                  <h4>
+                    <svg aria-hidden="true" viewBox="0 0 24 24"><rect x="5" y="3.5" width="14" height="17" rx="2.5" /><path d="M8.5 8.5h7M8.5 12h7M8.5 15.5h4" /></svg>
+                    Item details <code>get_item_details</code>
+                  </h4>
+                  <p>Full grounded metadata for a selected product.</p>
+                </div>
+                <div class="sr-tool" data-sr-tool="pref">
+                  <h4>
+                    <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.6A4 4 0 0 1 12 8a4 4 0 0 1 7 2.4C19 15.6 12 20 12 20Z" /></svg>
+                    User preference <code>get_user_preference</code>
+                  </h4>
+                  <div class="sr-src">
+                    <span>One-sentence preference profile</span>
+                    <i aria-hidden="true">↑</i>
+                    <span>Interaction history <small>target removed, summarized once</small></span>
+                  </div>
+                </div>
+                <p class="sr-tool-note">
+                  The simulator sees the current need, recent dialogue, and the latest action, never the target item
+                  or the preference profile.
+                </p>
+              </section>
+
+              <!-- Task-aligned RL -->
+              <section aria-label="Task-aligned RL training" class="sr-panel sr-rl" data-mask="external" data-sr-panel="3">
+                <header class="sr-ph">
+                  <h3>Task-aligned RL training</h3>
+                  <div aria-label="Token masking" class="sr-mask" role="group">
+                    <button aria-pressed="true" data-sr-mask="external" type="button">External LLM shopper <small>Rec tokens optimized</small></button>
+                    <button aria-pressed="false" data-sr-mask="selfplay" type="button">Self-play shopper <small>Rec and user tokens</small></button>
+                  </div>
+                </header>
+                <div class="sr-rl-grid">
+                  <div class="sr-rollouts" data-sr-a="rollouts">
+                    <p class="sr-label">Rollouts of one task <span>G = 8</span></p>
+                    <div class="sr-rows" data-sr-rows></div>
+                    <p class="sr-fine"><span class="sr-dash"></span> outlined = optimized tokens; faded tokens are masked out. Observations are never optimized.</p>
+                  </div>
+                  <div class="sr-reward" data-sr-a="reward">
+                    <p class="sr-label">Trajectory reward</p>
+                    <ul>
+                      <li data-p="3" data-s="5"><b>R<sub>rec</sub></b>final Hit@1 and natural retrieval NDCG</li>
+                      <li data-p="3" data-s="5"><b>R<sub>tool</sub></b>valid search, inspection, and preference calls</li>
+                      <li data-p="3" data-s="5"><b>R<sub>fmt</sub></b>recommendation formatting</li>
+                      <li class="pen" data-p="3" data-s="5"><b>−</b>redundant queries, unnecessarily long interactions</li>
+                    </ul>
+                    <p class="sr-adv" data-p="3" data-s="6">Group-relative advantage: each rollout’s reward is compared with the others for the same task.</p>
+                  </div>
+                  <div class="sr-update" data-sr-a="update">
+                    <p class="sr-label">Policy update</p>
+                    <div class="sr-model ref" data-p="3" data-s="7">
+                      <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 6l2.5-1.5M9.5 19.5 12 18l2.5 1.5" /></svg>
+                      Reference model <small>frozen</small>
+                    </div>
+                    <div class="sr-kl" data-p="3" data-s="7"><span>KL penalty</span><b>coef 1e-3</b></div>
+                    <div class="sr-model pol" data-p="3" data-s="7" data-sr-a="policy">
+                      <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 21c-3.6 0-6-2.4-6-5.7 0-3.2 2.4-4.6 3.4-7.6.9 1.6 1.7 2.3 2.6 2.6C12.3 7 13 4.7 15 3c.3 3.7 3 5.6 3 10.2C18 17.9 15.6 21 12 21Z" /></svg>
+                      Policy model <small>trained</small>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </div>
+
+          <figcaption>
+            The recommendation agent interacts with a user simulator and external tools, while task-aligned GRPO
+            optimizes complete multi-turn trajectories. The episode is the illustrative example from the paper figure.
+          </figcaption>
+          <details class="sr-paperfig">
+            <summary>Paper figure</summary>
+            <a href="assets/method_overview.png" rel="noopener" target="_blank">
+              <img
+                alt="SimRec multi-turn interaction, recommendation tool suite, and task-aligned GRPO training overview"
+                height="1230"
+                loading="lazy"
+                src="assets/method_overview.png"
+                width="2320"
+              />
+            </a>
+          </details>
+        </figure>
+      </section>
+
+      <!-- ============================ How it works ============================ -->
+      <section class="sr-section sr-how" id="how">
+        <div class="sr-wrap">
+          <div class="sr-split">
+            <header class="sr-head reveal">
+              <p class="sr-label-pill">How it works</p>
+              <h2>One policy chooses every action. Nothing fixes the order.</h2>
+              <p>
+                Each task contains an initial shopping request, a current task need, a target set used only by the
+                environment, and optionally a history-derived preference summary. At each step the recommender sees
+                the dialogue and prior tool results, then chooses one action.
+              </p>
+              <p class="sr-callout">
+                <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.34-5.66M20 4v4h-4" /></svg>
+                <span>
+                  A recommendation can be rejected. The agent may then search again, inspect a candidate, consult the
+                  preference tool, or ask a clarification question before revising its decision.
+                </span>
+              </p>
+            </header>
+
+            <ul class="sr-actlist reveal" aria-label="Actions available to the recommender">
+              <li class="rec">
+                <span class="sr-ico"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6" /><path d="M15 15l5 5" /></svg></span>
+                <div><span class="need">Candidate discovery</span><code>search_products</code></div>
+                <p>Ranked Top-100 catalog results; the Top-20 are visible by default.</p>
+              </li>
+              <li class="rec">
+                <span class="sr-ico"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="5" y="3.5" width="14" height="17" rx="2.5" /><path d="M8.5 8.5h7M8.5 12h7M8.5 15.5h4" /></svg></span>
+                <div><span class="need">Candidate verification</span><code>get_item_details</code></div>
+                <p>Full grounded metadata for a selected product.</p>
+              </li>
+              <li class="rec">
+                <span class="sr-ico"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.6A4 4 0 0 1 12 8a4 4 0 0 1 7 2.4C19 15.6 12 20 12 20Z" /></svg></span>
+                <div><span class="need">Long-term preference</span><code>get_user_preference</code></div>
+                <p>A precomputed, one-sentence preference summary when available.</p>
+              </li>
+              <li class="user">
+                <span class="sr-ico"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 6.5A2.5 2.5 0 0 1 7.5 4h9A2.5 2.5 0 0 1 19 6.5v7a2.5 2.5 0 0 1-2.5 2.5H11l-4 3.5V16h0a2 2 0 0 1-2-2Z" /><path d="M10.2 8.6a1.9 1.9 0 1 1 2.6 1.8c-.5.2-.8.6-.8 1.1M12 13.4h.01" /></svg></span>
+                <div><span class="need">Need clarification</span><code>shopper-facing question</code></div>
+                <p>A direct simulator response.</p>
+              </li>
+              <li class="hit">
+                <span class="sr-ico"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" /><circle cx="12" cy="12" r="4" /><circle cx="12" cy="12" r="0.8" /></svg></span>
+                <div><span class="need">Decision</span><code>structured recommendation</code></div>
+                <p>Environment success check and simulated shopper feedback.</p>
+              </li>
+            </ul>
+          </div>
+
+          <div class="sr-features">
+            <article class="sr-feat user reveal">
+              <span class="sr-feat-ico"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="4" /><path d="M4.5 20c.8-4 3.9-6 7.5-6s6.7 2 7.5 6" /></svg></span>
+              <p class="sr-feat-tag">User simulation</p>
+              <h3>A shopper anchored to the task, not the answer</h3>
+              <p>
+                The simulator receives the current shopping need, recent dialogue, and latest agent action. It does
+                <b>not</b> receive the target item ID or the preference profile. After a rejected recommendation it
+                names one or two missing requirements without naming the target; the environment checks success on
+                its own.
+              </p>
+              <ul class="sr-modes">
+                <li><b>External</b> (default): an OpenAI-compatible LLM endpoint.</li>
+                <li><b>Self-play</b>: one model alternates shopper and recommender roles with role-specific prompts.</li>
+              </ul>
+            </article>
+            <article class="sr-feat rec reveal">
+              <span class="sr-feat-ico"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 19h16M7 16V10M12 16V5M17 16v-4" /></svg></span>
+              <p class="sr-feat-tag">Trajectory reward</p>
+              <h3>Credit the whole interaction, not one turn</h3>
+              <p>
+                GRPO jointly optimizes the final <b>Hit@1</b>, <b>natural retrieval NDCG</b>, <b>valid tool use</b>,
+                and <b>recommendation formatting</b>, while penalizing redundant queries and unnecessarily long
+                interactions.
+              </p>
+              <ul class="sr-modes">
+                <li>Qwen3-4B policy, Qwen3 Dense retrieval, eight GRPO rollouts.</li>
+                <li>Learning rate 5e-7, clipping 0.2, KL coefficient 1e-3.</li>
+              </ul>
+            </article>
+            <article class="sr-feat hit reveal">
+              <span class="sr-feat-ico"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3.5 19 6v5.5c0 4.3-3 7.6-7 9-4-1.4-7-4.7-7-9V6Z" /><path d="m9 12 2.2 2.2L15.5 10" /></svg></span>
+              <p class="sr-feat-tag">Training-only target injection</p>
+              <h3>Help exploration, never inflate the metric</h3>
+              <p>
+                When natural retrieval misses the target, it may be inserted into the <i>visible</i> candidate list,
+                only during training and only after two shopper turns. Natural, unmodified retrieval results always
+                determine the retrieval reward and every evaluation metric; injection is disabled at evaluation.
+              </p>
+            </article>
+            <article class="sr-feat obs reveal">
+              <span class="sr-feat-ico"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 4.5h9l3 3V19a1.5 1.5 0 0 1-1.5 1.5h-10A1.5 1.5 0 0 1 5 19V6a1.5 1.5 0 0 1 1-1.5Z" /><path d="M8.5 11h7M8.5 14.5h4.5" /></svg></span>
+              <p class="sr-feat-tag">Preference profiles</p>
+              <h3>Long-term history, reduced to one sentence</h3>
+              <p>
+                For Amazon C4, histories are deduplicated, ordered in time, filtered to remove the task target, and
+                summarized once by an LLM before rollout. The preference tool sees only that sentence, never the raw
+                history.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================== Results ============================== -->
+      <section class="sr-section sr-results" id="results">
+        <div class="sr-wrap">
+          <header class="sr-head reveal">
+            <p class="sr-label-pill">Results</p>
+            <h2>Better retrieval and recommendations, on both datasets.</h2>
+            <p>
+              All methods use Qwen3-4B under the paper’s evaluation protocol. Retrieval metrics are instance-weighted
+              percentages from the best non-redundant, natural Top-100 search in a session; Hit@1 asks whether the
+              final recommendation belongs to the target set. Target injection is disabled in every evaluation run.
+            </p>
+          </header>
+
+          <figure class="sr-panel-card sr-res reveal">
+            <figcaption class="sr-card-head">
+              <div>
+                <h3>Main results (%)</h3>
+                <p>Qwen3 Dense retrieval unless labelled BM25. Pick a metric tile to chart it.</p>
+              </div>
+              <div aria-label="Dataset" class="sr-seg" data-sr-dataset role="group">
+                <button aria-pressed="true" data-v="esci" type="button">ESCI</button>
+                <button aria-pressed="false" data-v="c4" type="button">Amazon C4</button>
+              </div>
+            </figcaption>
+            <div aria-label="Metric" class="sr-tiles" data-sr-metric role="group">
+              <button aria-pressed="true" data-v="0" type="button">
+                <span class="t-label">NDCG@100</span><span class="t-val" data-tile-val></span><span class="t-delta" data-tile-delta></span>
+              </button>
+              <button aria-pressed="false" data-v="1" type="button">
+                <span class="t-label">Recall@100</span><span class="t-val" data-tile-val></span><span class="t-delta" data-tile-delta></span>
+              </button>
+              <button aria-pressed="false" data-v="2" type="button">
+                <span class="t-label">Hit@1</span><span class="t-val" data-tile-val></span><span class="t-delta" data-tile-delta></span>
+              </button>
+            </div>
+            <div class="sr-bars" data-sr-bars></div>
+            <p class="sr-res-note" data-sr-res-note aria-live="polite"></p>
+            <details class="sr-table-details">
+              <summary>Full table</summary>
+              <div class="sr-table-scroll">
+                <table class="sr-table">
+                  <thead>
+                    <tr><th scope="col">Dataset</th><th scope="col">Method</th><th scope="col">NDCG@100</th><th scope="col">Recall@100</th><th scope="col">Hit@1</th></tr>
+                  </thead>
+                  <tbody data-sr-table></tbody>
+                </table>
+              </div>
+            </details>
+          </figure>
+
+          <div class="sr-split sr-abl-split">
+            <header class="sr-head reveal">
+              <h3 class="sr-h3">Every interaction component contributes</h3>
+              <p>
+                On Amazon C4, removing preference access, item inspection, or multi-turn feedback each lowers both
+                retrieval and recommendation quality.
+              </p>
+            </header>
+            <figure class="sr-panel-card sr-abl reveal">
+              <figcaption class="sr-card-head">
+                <div>
+                  <h3>Component ablations on Amazon C4 (%)</h3>
+                  <p>Change relative to full SimRec in parentheses.</p>
+                </div>
+              </figcaption>
+              <div class="sr-abl-grid" data-sr-abl></div>
+            </figure>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================ Takeaways ============================ -->
+      <section class="sr-section sr-takeaways" id="takeaways">
+        <div class="sr-wrap">
+          <header class="sr-head reveal">
+            <p class="sr-label-pill">Takeaways</p>
+            <h2>What the trained agent tells us.</h2>
+          </header>
+          <blockquote class="sr-quote reveal">
+            <p>
+              Give the agent the tools and a shopper to talk to, reward the whole conversation, and it learns when to
+              <span class="sr-verb rec">search</span>, when to <span class="sr-verb user">ask</span>, and when to
+              <span class="sr-verb hit">recommend</span>.
+            </p>
+          </blockquote>
+
+          <ol class="sr-tklist">
+            <li class="rec reveal">
+              <span class="sr-tk-n">1</span>
+              <div>
+                <h3>The workflow is learned, not written.</h3>
+                <p>
+                  At inference the policy is given no tool-use order. It learns to retrieve, inspect candidates,
+                  consult preferences when useful, and revise after feedback.
+                </p>
+              </div>
+              <p class="sr-tk-stat"><b>32.23 → 35.42</b><span>NDCG@100 on ESCI, Qwen3-4B base → SimRec-4B</span></p>
+            </li>
+            <li class="hit reveal">
+              <span class="sr-tk-n">2</span>
+              <div>
+                <h3>Inspecting items pays off at decision time.</h3>
+                <p>Without the item-detail tool, the final recommendation suffers most of all ablations on Amazon C4.</p>
+              </div>
+              <p class="sr-tk-stat"><b>9.75 → 6.04</b><span>Hit@1 on Amazon C4, full SimRec → without item details</span></p>
+            </li>
+            <li class="user reveal">
+              <span class="sr-tk-n">3</span>
+              <div>
+                <h3>Feedback is a training signal, not just a dialogue turn.</h3>
+                <p>
+                  Removing multi-turn feedback, so the agent cannot be rejected and revise, lowers both retrieval
+                  quality and Hit@1.
+                </p>
+              </div>
+              <p class="sr-tk-stat"><b>22.14 → 24.72</b><span>NDCG@100 on Amazon C4, without → with multi-turn feedback</span></p>
+            </li>
+            <li class="user reveal">
+              <span class="sr-tk-n">4</span>
+              <div>
+                <h3>An external shopper trains a better recommender than self-play.</h3>
+                <p>
+                  Self-play needs no simulator endpoint, but on both datasets the external simulator gives the
+                  stronger policy.
+                </p>
+              </div>
+              <p class="sr-tk-stat"><b>24.72 vs 19.77</b><span>NDCG@100 on Amazon C4, external simulator vs self-play</span></p>
+            </li>
+            <li class="rec reveal">
+              <span class="sr-tk-n">5</span>
+              <div>
+                <h3>The retriever under the tool still matters.</h3>
+                <p>
+                  The same agent with a BM25 index scores far below the dense default on both datasets: learned tool
+                  use does not make up for a weaker retriever.
+                </p>
+              </div>
+              <p class="sr-tk-stat"><b>35.42 vs 24.02</b><span>NDCG@100 on ESCI, Qwen3 Dense vs BM25</span></p>
+            </li>
+          </ol>
+        </div>
+      </section>
+
+      <!-- =============================== Code =============================== -->
+      <section class="sr-section sr-code" id="code">
+        <div class="sr-wrap sr-code-grid">
+          <div class="sr-head reveal">
+            <p class="sr-label-pill">Code</p>
+            <h2>Train a recommendation agent with SimRec.</h2>
+            <p>
+              Interaction environment, user simulator (external or self-play), tool runtime, GRPO reward, and dataset
+              preparation for ESCI and Amazon C4, built on verl. The release contains no datasets, user histories,
+              weights, indexes, or API keys; see the
+              <a href="https://github.com/ZJU-REAL/SimRec#data-preparation">data preparation guide</a>.
+            </p>
+            <a class="sr-btn dark" href="https://github.com/ZJU-REAL/SimRec">View on GitHub ↗</a>
+          </div>
+          <div class="sr-codecard reveal">
+            <div class="sr-codecard-top"><span>Train &amp; evaluate</span><small>bash</small></div>
+            <pre aria-label="Training commands"><code><span class="c"># Qwen3-4B, eight GRPO rollouts, external shopper</span>
+<span class="p">$</span> cp configs/train.env.example configs/train.env
+<span class="p">$</span> export SIMREC_USER_LLM_API_KEY=...
+<span class="p">$</span> CONFIG_FILE=configs/train.env bash scripts/train_simrec.sh
+
+<span class="c"># Held-out evaluation (target injection off)</span>
+<span class="p">$</span> EVAL_MODEL_PATH=checkpoints/exported/model \
+  CONFIG_FILE=configs/train.env \
+  bash evaluation/evaluate_simrec.sh</code></pre>
+          </div>
+        </div>
+        <div class="sr-wrap">
+          <div class="sr-cite reveal" id="citation">
+            <p class="sr-label-pill">Citation</p>
+            <p>Citation information will be added when the paper is publicly available.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="sr-footer">
+      <div class="sr-wrap">
+        <span class="sr-logo small" aria-hidden="true">
+          <svg viewBox="0 0 28 28"><path class="b1" d="M4 7.5A4.5 4.5 0 0 1 8.5 3h8A4.5 4.5 0 0 1 21 7.5v4a4.5 4.5 0 0 1-4.5 4.5H11l-4.2 3.3c-.5.4-1.3 0-1.3-.6V15.6A4.5 4.5 0 0 1 4 12Z" /><path class="b2" d="M24 13.5v3a4 4 0 0 1-1.6 3.2v3.1c0 .5-.6.8-1 .5L18 21h-3.5a4 4 0 0 1-3.6-2.2" /></svg>
+        </span>
+        <span>SimRec · Apache-2.0</span>
+        <a href="https://github.com/ZJU-REAL/SimRec">GitHub ↗</a>
+      </div>
+    </footer>
+  </body>
+</html>
