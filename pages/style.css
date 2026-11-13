@@ -2456,3 +2456,49 @@ pre {
     padding: 4px 8px;
   }
 }
+
+/* -------------------------------- Citation -------------------------------- */
+.sr-cite-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.sr-cite .sr-cite-head .sr-label-pill {
+  margin: 0;
+}
+.sr-copy {
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  font: 600 13px/1.2 var(--sans);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+.sr-copy:hover {
+  border-color: var(--rec);
+  color: var(--rec);
+}
+.sr-copy.done {
+  border-color: var(--hit);
+  background: var(--hit-soft);
+  color: var(--hit-ink);
+}
+.sr-bib {
+  margin: 0;
+  padding: 16px 18px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  color: var(--ink);
+  font: 13px/1.65 var(--mono);
+}
+.sr-anon a {
+  color: inherit;
+  text-underline-offset: 3px;
+}

@@ -623,3 +623,21 @@ function segmented(group, onChange) {
   setActive(1, false);
   drawWires();
 })();
+
+/* Copy BibTeX */
+document.querySelectorAll("[data-copy]").forEach((button) =>
+  button.addEventListener("click", async () => {
+    const text = document.getElementById(button.dataset.copy).textContent;
+    try {
+      await navigator.clipboard.writeText(text);
+      button.textContent = "Copied ✓";
+    } catch {
+      button.textContent = "Select and copy";
+    }
+    button.classList.add("done");
+    setTimeout(() => {
+      button.textContent = "Copy BibTeX";
+      button.classList.remove("done");
+    }, 1800);
+  }),
+);

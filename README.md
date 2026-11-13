@@ -2,23 +2,31 @@
 
 # SimRec
 
-**Learning to Search, Ask, and Recommend from Simulated Interaction**
+### Learning to Search, Ask, and Recommend from Simulated Interaction
 
-[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=flat-square)](pyproject.toml)
-[![License](https://img.shields.io/badge/License-Apache--2.0-blue?style=flat-square)](LICENSE)
+[![arXiv](https://img.shields.io/badge/arXiv-2611.15426-b31b1b?style=flat-square)](https://arxiv.org/abs/2611.15426)
+[![Project Page](https://img.shields.io/badge/Project-Page-3B6FE0?style=flat-square)](https://zjureal.com/SimRec/)
 
 </div>
 
 <p align="center">
-  <img src="assets/method_overview.png"
-       alt="SimRec multi-turn interaction, recommendation tool suite, and task-aligned GRPO training overview"
-       width="100%">
+  <img src="assets/hero.png" alt="SimRec end to end: the Rec Agent decides its next action itself, calls search_products, get_item_details and get_user_preference from its toolbox, and recommends to a user simulator that knows the task need but not the target; after the simulator rejects the first item, the agent searches with a corrected query and re-recommends an item in the target set" width="100%">
 </p>
 
-<p align="center"><em>
-The recommendation agent interacts with a user simulator and external tools,
-while task-aligned GRPO optimizes complete multi-turn trajectories.
-</em></p>
+<p align="center">
+  <a href="#overview">Overview</a> ·
+  <a href="#highlights">Highlights</a> ·
+  <a href="#results">Results</a> ·
+  <a href="#method">Method</a> ·
+  <a href="#quick-start">Quick Start</a> ·
+  <a href="#training">Training</a> ·
+  <a href="#evaluation">Evaluation</a> ·
+  <a href="#citation">Citation</a>
+</p>
+
+<a id="overview"></a>
+
+## 🔎 Overview
 
 Recommendation agents can retrieve products, inspect their attributes, ask a
 shopper for clarification, and revise a recommendation after rejection. In many
@@ -34,12 +42,25 @@ C4. The policy learns to retrieve, inspect candidates, consult preferences when
 useful, and revise after feedback; it is not given a fixed tool-use order at
 inference time.
 
-> This anonymous release contains implementation code, portable configuration
+> This release contains implementation code, portable configuration
 > templates, and dataset-preparation recipes. It contains no datasets, raw user
 > histories, model weights, retrieval indexes, checkpoints, logs, API keys, or
 > private evaluation records.
 
-## Highlights
+<p align="center">
+  <img src="assets/method_overview.png"
+       alt="SimRec multi-turn interaction, recommendation tool suite, and task-aligned GRPO training overview"
+       width="100%">
+</p>
+
+<p align="center"><em>
+The recommendation agent interacts with a user simulator and external tools,
+while task-aligned GRPO optimizes complete multi-turn trajectories.
+</em></p>
+
+<a id="highlights"></a>
+
+## ✨ Highlights
 
 - **End-to-end interaction policy.** At every turn, the agent chooses between
   product search, item-detail inspection, preference access, a clarification
@@ -55,7 +76,9 @@ inference time.
   training. Natural, unmodified retrieval results always determine retrieval
   reward and evaluation metrics.
 
-## Results
+<a id="results"></a>
+
+## 📊 Results
 
 The aggregate results below are from the paper. Retrieval metrics are
 instance-weighted percentages. For agents, retrieval metrics take the best
@@ -94,7 +117,9 @@ to the full interaction policy. Values are percentages from the paper.
 | without item-detail tool | 23.42 | 6.04 |
 | without multi-turn feedback | 22.14 | 8.06 |
 
-## Method
+<a id="method"></a>
+
+## 🧭 Method
 
 Each task contains an initial shopping request, a current task need, a target
 set used only by the environment, and optionally a history-derived preference
@@ -128,14 +153,15 @@ histories are deduplicated, chronologically ordered, filtered to remove the
 task target, and summarized once by an LLM before rollout. The runtime
 preference tool sees only that precomputed sentence, never raw history.
 
+<a id="quick-start"></a>
 
-## Quick start
+## 🚀 Quick Start
 
 Use a Python environment with a CUDA-compatible PyTorch build, then install
 [verl](https://github.com/volcengine/verl) and the extra dependencies:
 
 ```bash
-git clone <repository-url> SimRec
+git clone https://github.com/ZJU-REAL/SimRec.git
 cd SimRec
 
 pip install -r requirements.txt
@@ -148,7 +174,9 @@ export VERL_REPO_ROOT=../verl
 The launcher expects this repository and `verl` to be sibling directories. Set
 `VERL_REPO_ROOT` explicitly if your layout differs.
 
-## Data preparation
+<a id="data-preparation"></a>
+
+## 🗃️ Data Preparation
 
 See [`data/README.md`](data/README.md) for official ESCI and Amazon-C4 links,
 the local data contract, and the full construction protocol. The repository
@@ -214,7 +242,9 @@ data/
 └── profiles/                   # optional precomputed preference profiles
 ```
 
-## Train
+<a id="training"></a>
+
+## 🏋️ Training
 
 Copy the relative-path template, then place any external-simulator credential only in the shell environment:
 
@@ -231,7 +261,9 @@ Adjust data, index, model, and local GPU locations if your layout differs.
 
 Set `SIMREC_USER_SIMULATOR_MODE=self_play` to use self-play. This changes the dataset, reward manager, interaction, tools, and agent loop together; no external user-simulator endpoint is needed.
 
-## Held-out evaluation
+<a id="evaluation"></a>
+
+## 🧪 Evaluation
 
 Use a merged/exported checkpoint as `EVAL_MODEL_PATH`, then run the dedicated
 validation-only launcher. `EVAL_DATA` defaults to `TEST_DATA` and is used
@@ -247,8 +279,9 @@ bash evaluation/evaluate_simrec.sh
 Set `EVAL_DATA` only when evaluating a different held-out JSONL split. Target
 injection is disabled automatically for these rollouts.
 
+<a id="repository-layout"></a>
 
-## Repository layout
+## 🗂️ Repository Layout
 
 | Path | Contents |
 |---|---|
@@ -265,13 +298,24 @@ injection is disabled automatically for these rollouts.
 | [`tests/`](tests/) | Public smoke-test scope; no private data or run artifacts. |
 | [`data/`](data/) | Tracked directory markers and expected locations for locally prepared data, indexes, and optional profiles. |
 
+<a id="citation"></a>
 
+## 📝 Citation
 
-## Citation
+If you find SimRec useful, please cite:
 
-Citation information will be added when the paper is publicly available.
+```bibtex
+@article{zhang2026simrec,
+  title   = {SimRec: Learning to Search, Ask, and Recommend from Simulated Interaction},
+  author  = {Zhang, Yaxin and Wu, Xingyu and Yan, Yuchen and Dai, Yuqin and Zhao, Hong and Shen, Lixing and Chen, Zhan and Shao, Jian and Shen, Yongliang},
+  journal = {arXiv preprint arXiv:2611.15426},
+  year    = {2026}
+}
+```
 
-## License
+<a id="license"></a>
+
+## 📄 License
 
 Apache-2.0 ([LICENSE](LICENSE)). The copyright notice uses the anonymous
 collective name “SimRec Authors” during double-blind review.
