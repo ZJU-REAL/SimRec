@@ -219,7 +219,7 @@ function segmented(group, onChange) {
   const playButton = fig.querySelector("[data-sr-play]");
   const panels = [...fig.querySelectorAll("[data-sr-panel]")];
   const ep = fig.querySelector(".sr-ep");
-  const tools = fig.querySelector(".sr-tools");
+  const chat = fig.querySelector(".sr-chat");
   const rl = fig.querySelector(".sr-rl");
   const anchor = (key) => fig.querySelector(`[data-sr-a="${key}"]`);
   const NS = "http://www.w3.org/2000/svg";
@@ -300,33 +300,11 @@ function segmented(group, onChange) {
     const t = r.top - s.top;
     return { l, t, r: l + r.width, b: t + r.height, cx: l + r.width / 2, cy: t + r.height / 2 };
   }
-  const colors = { call: "var(--rec)", ret: "var(--obs)", rl: "var(--rl)" };
+  /* Only phase-3 (RL) wires exist. Tool calls are shown by highlighting the tool card instead. */
   function routes() {
     const out = {};
     const gut = parseFloat(getComputedStyle(fig).getPropertyValue("--gut")) || 30;
     const e = box(ep);
-    if (shown(tools)) {
-      const t0 = box(tools);
-      const side = t0.l > e.r - 2;
-      ["search", "detail", "pref"].forEach((key) => {
-        const call = fig.querySelector(`[data-tool="${key}"]`);
-        const ret = fig.querySelector(`[data-ret="${key}"]`);
-        const tool = box(fig.querySelector(`[data-sr-tool="${key}"]`));
-        const c = box(call);
-        const o = box(ret);
-        if (side) {
-          const x1 = e.r + (t0.l - e.r) * 0.32;
-          const x2 = e.r + (t0.l - e.r) * 0.68;
-          out[`call-${key}`] = [1, "call", [[c.r, c.cy], [x1, c.cy], [x1, tool.cy - 6], [tool.l, tool.cy - 6]]];
-          out[`ret-${key}`] = [1, "ret", [[tool.l, tool.cy + 6], [x2, tool.cy + 6], [x2, o.cy], [o.r, o.cy]]];
-        } else {
-          const x1 = e.r + gut * 0.32;
-          const x2 = e.r + gut * 0.68;
-          out[`call-${key}`] = [1, "call", [[c.r, c.cy], [x1, c.cy], [x1, tool.cy - 6], [tool.r, tool.cy - 6]]];
-          out[`ret-${key}`] = [1, "ret", [[tool.r, tool.cy + 6], [x2, tool.cy + 6], [x2, o.cy], [o.r, o.cy]]];
-        }
-      });
-    }
     if (shown(rl)) {
       const roll = box(anchor("rollouts"));
       const rew = box(anchor("reward"));
@@ -334,22 +312,22 @@ function segmented(group, onChange) {
       const r = box(rl);
       const sideBySide = rew.l > roll.r;
       if (sideBySide) {
-        out["rl-reward"] = [3, "rl", [[roll.r, roll.cy], [rew.l, roll.cy]]];
-        out["rl-update"] = [3, "rl", [[rew.r, roll.cy], [upd.l, roll.cy]]];
+        out["rl-reward"] = [[roll.r, roll.cy], [rew.l, roll.cy]];
+        out["rl-update"] = [[rew.r, roll.cy], [upd.l, roll.cy]];
       } else {
-        out["rl-reward"] = [3, "rl", [[roll.cx, roll.b], [rew.cx, rew.t]]];
-        out["rl-update"] = [3, "rl", [[rew.cx, rew.b], [upd.cx, upd.t]]];
+        out["rl-reward"] = [[roll.cx, roll.b], [rew.cx, rew.t]];
+        out["rl-update"] = [[rew.cx, rew.b], [upd.cx, upd.t]];
       }
       if (shown(ep)) {
         const s = box(anchor("strip"));
         const mid = (e.b + r.t) / 2;
-        out["strip-rl"] = [3, "rl", [[s.cx, s.b], [s.cx, mid], [roll.cx, mid], [roll.cx, roll.t]]];
+        out["strip-rl"] = [[s.cx, s.b], [s.cx, mid], [roll.cx, mid], [roll.cx, roll.t]];
         const pol = box(anchor("policy"));
         const rec = box(anchor("rec"));
         const xl = e.l - gut * 0.5;
         const yb = r.b + 16;
         const yt = e.t - 12;
-        out["loop"] = [3, "rl", [[pol.cx, pol.b], [pol.cx, yb], [xl, yb], [xl, yt], [rec.cx, yt], [rec.cx, rec.t]]];
+        out["loop"] = [[pol.cx, pol.b], [pol.cx, yb], [xl, yb], [xl, yt], [rec.cx, yt], [rec.cx, rec.t]];
       }
     }
     return out;
@@ -375,42 +353,39 @@ function segmented(group, onChange) {
     return el;
   };
   function drawWires() {
-    const keep = Object.fromEntries(Object.entries(wires).map(([id, w]) => [id, w.g.getAttribute("class")]));
+    // A wire is drawn only once its step has played (class "done"), or when the figure is settled.
+    const done = new Set(Object.keys(wires).filter((id) => wires[id].g.classList.contains("done")));
     svg.replaceChildren();
-    const defs = make("defs", {});
-    Object.entries(colors).forEach(([kind, color]) => {
-      const marker = make("marker", {
-        id: `sr-arrow-${kind}`,
-        markerWidth: 9,
-        markerHeight: 9,
-        refX: 8,
-        refY: 4.5,
-        orient: "auto",
-        markerUnits: "userSpaceOnUse",
-      });
-      marker.append(make("path", { d: "M0,0.5 L9,4.5 L0,8.5 z", style: `fill: ${color}` }));
-      defs.append(marker);
+    const marker = make("marker", {
+      id: "sr-arrow",
+      markerWidth: 9,
+      markerHeight: 9,
+      refX: 8,
+      refY: 4.5,
+      orient: "auto",
+      markerUnits: "userSpaceOnUse",
     });
-    svg.append(defs);
+    marker.append(make("path", { d: "M0,0.5 L9,4.5 L0,8.5 z" }));
+    svg.append(make("defs", {}));
+    svg.firstChild.append(marker);
     wires = {};
-    Object.entries(routes()).forEach(([id, [phase, kind, pts]]) => {
-      const d = pathData(pts);
-      const g = make("g", { style: `--wc: ${colors[kind]}` });
-      const base = make("path", { class: "base", d, "marker-end": `url(#sr-arrow-${kind})` });
-      const flow = make("path", { class: "flow", d });
+    Object.entries(routes()).forEach(([id, pts]) => {
+      const g = make("g", {});
+      const flow = make("path", { class: "flow", d: pathData(pts) });
       const dot = make("circle", { class: "dot", r: 4.5, cx: pts[0][0], cy: pts[0][1] });
-      g.append(base, flow, dot);
+      g.append(flow, dot);
       svg.append(g);
       const len = flow.getTotalLength();
       flow.style.strokeDasharray = `${len} ${len}`;
-      flow.style.strokeDashoffset = keep[id]?.includes("done") ? 0 : len;
-      if (keep[id]) g.setAttribute("class", keep[id]);
-      wires[id] = { g, flow, dot, len, phase };
+      wires[id] = { g, flow, dot, len };
+      if (done.has(id) || !running) finish(wires[id]);
+      else flow.style.strokeDashoffset = len;
     });
-    markWires();
   }
-  function markWires() {
-    Object.values(wires).forEach((w) => w.g.classList.toggle("on", w.phase === phase));
+  function finish(w) {
+    w.g.classList.remove("live");
+    w.g.classList.add("done");
+    w.flow.style.strokeDashoffset = 0;
   }
   const ease = (t) => 1 - Math.pow(1 - t, 3);
   function flow(id, ms) {
@@ -428,8 +403,7 @@ function segmented(group, onChange) {
         w.dot.setAttribute("cy", p.y);
         w.g.classList.add("live");
         if (t < 1) return requestAnimationFrame(frame);
-        w.g.classList.remove("live");
-        w.g.classList.add("done");
+        finish(w);
         resolve();
       }
       requestAnimationFrame(frame);
@@ -444,9 +418,15 @@ function segmented(group, onChange) {
 
   /* ---------- Effects ---------- */
   const lit = (p, s) => fig.querySelectorAll(`[data-p="${p}"][data-s="${s}"]`).forEach((el) => el.classList.add("lit"));
-  function hot(el) {
-    fig.querySelectorAll(".sr-msg.hot, .sr-tool.hot").forEach((h) => h !== el && h.classList.remove("hot"));
-    if (el) el.classList.add("hot");
+  function hot(...els) {
+    fig.querySelectorAll(".sr-msg.hot, .sr-tool.hot").forEach((h) => !els.includes(h) && h.classList.remove("hot"));
+    els.forEach((el) => el && el.classList.add("hot"));
+  }
+  /* Keep the newest message in view by scrolling the chat itself (never the page) */
+  function follow(el, smooth = !reduceMotion) {
+    if (!chat.clientHeight) return;
+    const top = el ? el.offsetTop + el.offsetHeight + 10 - chat.clientHeight : chat.scrollHeight;
+    if (!el || top > chat.scrollTop) chat.scrollTo({ top: Math.max(0, top), behavior: smooth ? "smooth" : "auto" });
   }
   function bump(el) {
     if (!el) return;
@@ -459,16 +439,14 @@ function segmented(group, onChange) {
   function say(p, s) {
     lit(p, s);
     hot(msg(p, s));
+    follow(msg(p, s));
   }
+  /* Call chip appears, then the tool card is marked "called", then its observation card arrives */
   function toolCall(p, s, key) {
     return [
-      [600, () => say(p, s)],
-      [750, (ms) => {
-        hot(tool(key));
-        flow(`call-${key}`, ms);
-      }],
-      [650, (ms) => flow(`ret-${key}`, ms)],
-      [700, () => say(p, s + 1)],
+      [650, () => say(p, s)],
+      [950, () => hot(msg(p, s), tool(key))],
+      [800, () => say(p, s + 1)],
     ];
   }
 
@@ -501,7 +479,7 @@ function segmented(group, onChange) {
     ],
     3: [
       [900, (ms) => {
-        hot(null);
+        hot();
         flow("strip-rl", ms);
       }],
       [900, () => lit(3, 1)],
@@ -532,13 +510,13 @@ function segmented(group, onChange) {
     fig.toggleAttribute("data-dim", dim);
     panels.forEach((panel) => panel.classList.toggle("on", panel.dataset.srPanel.split(" ").includes(String(p))));
     tabs.forEach((tab) => tab.setAttribute("aria-pressed", String(Number(tab.dataset.srPhase) === p)));
-    markWires();
   }
   function settle() {
     fig.classList.remove("sr-run");
     fig.querySelectorAll("[data-p]").forEach((el) => el.classList.add("lit"));
-    hot(null);
-    clearWires();
+    hot();
+    Object.values(wires).forEach(finish);
+    follow(null, false);
     tabs.forEach((tab) => tab.style.setProperty("--t", 0));
   }
   function stop() {
@@ -553,9 +531,11 @@ function segmented(group, onChange) {
     setActive(p, true);
     fig.classList.add("sr-run");
     fig.querySelectorAll("[data-p]").forEach((el) => el.classList.toggle("lit", Number(el.dataset.p) < p));
-    hot(null);
+    hot();
     drawWires();
     clearWires();
+    if (p === 1) chat.scrollTo({ top: 0 });
+    else follow(null, false);
     const steps = sequences[p];
     const total = steps.reduce((sum, [ms]) => sum + ms, 0);
     const tab = tabs[p - 1];
@@ -622,6 +602,7 @@ function segmented(group, onChange) {
   fig.querySelectorAll("[data-p]").forEach((el) => el.classList.add("lit"));
   setActive(1, false);
   drawWires();
+  follow(null, false);
 })();
 
 /* Copy BibTeX */

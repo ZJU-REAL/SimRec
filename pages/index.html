@@ -17,11 +17,11 @@
       href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link href="style.css" rel="stylesheet" />
+    <link href="style.css?v=20261113b" rel="stylesheet" />
     <script>
       document.documentElement.classList.add("js");
     </script>
-    <script defer src="script.js"></script>
+    <script defer src="script.js?v=20261113b"></script>
   </head>
   <body>
     <a class="sr-skip" href="#main">Skip to content</a>
@@ -29,7 +29,7 @@
     <header class="sr-nav">
       <div class="sr-nav-bar">
         <a class="sr-logo" href="#top">
-          <img alt="SimRec" class="sr-logo-img" height="275" src="assets/title.png" width="960" />
+          <img alt="SimRec" class="sr-logo-img" height="26" src="assets/title.png" width="91" />
         </a>
         <nav aria-label="Main navigation">
           <a href="#method">Method</a>
@@ -50,7 +50,7 @@
         <div class="sr-wrap sr-hero-grid">
           <div class="sr-hero-copy">
             <p class="sr-badge"><i aria-hidden="true"></i>Recommendation agents · Reinforcement learning</p>
-            <h1 class="sr-title"><img alt="SimRec" height="275" src="assets/title.png" width="960" /></h1>
+            <h1 class="sr-title"><img alt="SimRec" height="135" src="assets/title.png" width="470" /></h1>
             <p class="sr-hero-sub">
               Learning to
               <span class="sr-verb rec">Search</span><span class="sr-comma">,</span>
@@ -87,15 +87,15 @@
               <div class="sr-b user">I’m looking for a smart LED bulb.</div>
               <div class="sr-call"><span>search_products</span>query="smart LED bulb" <em>Top-20 of 100 visible</em></div>
               <div class="sr-cands">
-                <span class="sr-pc"><i></i><b></b><b class="s"></b></span>
-                <span class="sr-pc focus"><i></i><code>BX1MMKHT</code><b class="s"></b></span>
-                <span class="sr-pc"><i></i><b></b><b class="s"></b></span>
+                <span class="sr-pc"><img alt="Warm filament smart bulb" height="64" loading="lazy" src="assets/products/filament.jpg" width="64" /><b></b><b class="s"></b></span>
+                <span class="sr-pc focus"><img alt="RGB colour smart LED bulb, item BX1MMKHT" height="64" loading="lazy" src="assets/products/rgb.jpg" width="64" /><code>BX1MMKHT</code><b class="s"></b></span>
+                <span class="sr-pc"><img alt="Dedicated cool-white smart LED bulb" height="64" loading="lazy" src="assets/products/white.jpg" width="64" /><b></b><b class="s"></b></span>
               </div>
               <div class="sr-call"><span>get_item_details</span>item_id="BX1MMKHT"</div>
-              <div class="sr-b rec card"><span class="sr-pick">Recommendation</span><code>recommended_item_id: …</code></div>
+              <div class="sr-b rec card"><img alt="RGB colour smart LED bulb, item BX1MMKHT" height="40" loading="lazy" src="assets/products/rgb.jpg" width="40" /><span class="sr-pick">Recommendation</span><code>recommended_item_id: …</code></div>
               <div class="sr-b user">No, I need dedicated white LEDs.</div>
               <div class="sr-call replan"><span>re-plan</span>search again · inspect · ask</div>
-              <div class="sr-b rec card ok"><span class="sr-pick">Recommendation</span><code>recommended_item_id: …</code><em>✓ in target set</em></div>
+              <div class="sr-b rec card ok"><img alt="Dedicated cool-white smart LED bulb" height="40" loading="lazy" src="assets/products/white.jpg" width="40" /><span class="sr-pick">Recommendation</span><code>recommended_item_id: …</code><em>✓ in target set</em></div>
             </div>
             <div class="sr-device-input" aria-hidden="true"><span>Simulated shopper is replying…</span><i></i></div>
           </div>
@@ -204,60 +204,85 @@
                   </div>
                 </header>
 
-                <ol class="sr-chat">
+                <ol class="sr-chat" aria-label="Conversation" tabindex="0">
                   <li class="sr-msg user" data-n="4" data-p="1" data-s="1">
                     <span class="sr-who">Shopper · request</span>
-                    <p>I’m looking for a smart LED bulb.</p>
+                    <p class="sr-bd">I’m looking for a smart LED bulb.</p>
                   </li>
-                  <li class="sr-msg rec" data-n="3" data-p="1" data-s="2" data-tool="search">
+                  <li class="sr-msg rec" data-n="3" data-p="1" data-s="2">
                     <span class="sr-who">Rec · search</span>
-                    <code>search_products(query="smart LED bulb")</code>
+                    <code class="sr-bd">search_products(query="smart LED bulb")</code>
                   </li>
-                  <li class="sr-msg obs" data-n="5" data-p="1" data-s="3" data-ret="search">
+                  <li class="sr-msg obs" data-n="5" data-p="1" data-s="3">
                     <span class="sr-who">Observation</span>
-                    <p>Ranked Top-100 results; the Top-20 are visible.</p>
+                    <div class="sr-bd">
+                      <p>Ranked Top-100 results; the Top-20 are visible.</p>
+                      <ul class="sr-prods">
+                        <li class="focus"><img alt="RGB colour smart LED bulb, item BX1MMKHT" height="56" loading="lazy" src="assets/products/rgb.jpg" width="56" /><code>BX1MMKHT</code></li>
+                        <li><img alt="Warm filament smart bulb" height="56" loading="lazy" src="assets/products/filament.jpg" width="56" /><span>Filament</span></li>
+                        <li><img alt="Two-pack smart bulb box" height="56" loading="lazy" src="assets/products/box.jpg" width="56" /><span>2-pack</span></li>
+                        <li><img alt="LED light strip" height="56" loading="lazy" src="assets/products/strip.jpg" width="56" /><span>Light strip</span></li>
+                        <li class="more"><b>+16</b><span>more</span></li>
+                      </ul>
+                    </div>
                   </li>
-                  <li class="sr-msg rec" data-n="3" data-p="1" data-s="4" data-tool="detail">
+                  <li class="sr-msg rec" data-n="3" data-p="1" data-s="4">
                     <span class="sr-who">Rec · inspect</span>
-                    <code>get_item_details(item_id="BX1MMKHT")</code>
+                    <code class="sr-bd">get_item_details(item_id="BX1MMKHT")</code>
                   </li>
-                  <li class="sr-msg obs" data-n="4" data-p="1" data-s="5" data-ret="detail">
+                  <li class="sr-msg obs" data-n="4" data-p="1" data-s="5">
                     <span class="sr-who">Observation</span>
-                    <p>Full grounded metadata: title · brand · price …</p>
+                    <div class="sr-bd sr-spec">
+                      <img alt="RGB colour smart LED bulb, item BX1MMKHT" height="52" loading="lazy" src="assets/products/rgb.jpg" width="52" />
+                      <div>
+                        <p>Full grounded metadata: <code>BX1MMKHT</code></p>
+                        <dl>
+                          <div><dt>title</dt><dd></dd></div>
+                          <div><dt>brand</dt><dd></dd></div>
+                          <div><dt>price</dt><dd></dd></div>
+                        </dl>
+                      </div>
+                    </div>
                   </li>
-                  <li class="sr-msg rec" data-n="2" data-p="1" data-s="6" data-tool="pref">
+                  <li class="sr-msg rec" data-n="2" data-p="1" data-s="6">
                     <span class="sr-who">Rec · preference</span>
-                    <code>get_user_preference()</code>
+                    <code class="sr-bd">get_user_preference()</code>
                   </li>
-                  <li class="sr-msg obs" data-n="3" data-p="1" data-s="7" data-ret="pref">
+                  <li class="sr-msg obs" data-n="3" data-p="1" data-s="7">
                     <span class="sr-who">Observation</span>
-                    <p>“The user prefers high-quality …”</p>
+                    <p class="sr-bd sr-note">“The user prefers high-quality …”</p>
                   </li>
-                  <li class="sr-msg rec" data-n="2" data-p="2" data-s="1" data-ask>
+                  <li class="sr-msg rec" data-n="2" data-p="2" data-s="1">
                     <span class="sr-who">Rec · clarify</span>
-                    <p><i>asks the shopper a clarification question</i></p>
+                    <p class="sr-bd"><i>asks the shopper a clarification question</i></p>
                   </li>
                   <li class="sr-msg user" data-n="2" data-p="2" data-s="2">
                     <span class="sr-who">Shopper</span>
-                    <p><i>clarifies the request</i></p>
+                    <p class="sr-bd"><i>clarifies the request</i></p>
                   </li>
                   <li class="sr-msg hit" data-n="2" data-p="2" data-s="3">
                     <span class="sr-who">Rec · recommend</span>
-                    <code>recommended_item_id: …</code>
-                    <span class="sr-verdict bad">not in target set</span>
+                    <div class="sr-bd sr-pickcard">
+                      <img alt="RGB colour smart LED bulb, item BX1MMKHT" height="48" loading="lazy" src="assets/products/rgb.jpg" width="48" />
+                      <code>recommended_item_id: …</code>
+                      <span class="sr-verdict bad">not in target set</span>
+                    </div>
                   </li>
-                  <li class="sr-msg user" data-n="3" data-p="2" data-s="4" data-reject>
+                  <li class="sr-msg user" data-n="3" data-p="2" data-s="4">
                     <span class="sr-who">Shopper · feedback</span>
-                    <p>“No, I need dedicated white LEDs.”</p>
+                    <p class="sr-bd">“No, I need dedicated white LEDs.”</p>
                   </li>
                   <li class="sr-msg rec" data-n="3" data-p="2" data-s="5">
                     <span class="sr-who">Rec · update &amp; re-plan</span>
-                    <p><i>search again, inspect, consult preferences, or ask</i></p>
+                    <p class="sr-bd"><i>search again, inspect, consult preferences, or ask</i></p>
                   </li>
                   <li class="sr-msg hit" data-n="2" data-p="2" data-s="6" data-sr-a="final">
                     <span class="sr-who">Rec · recommend</span>
-                    <code>recommended_item_id: …</code>
-                    <span class="sr-verdict good">✓ in target set</span>
+                    <div class="sr-bd sr-pickcard">
+                      <img alt="Dedicated cool-white smart LED bulb" height="48" loading="lazy" src="assets/products/white.jpg" width="48" />
+                      <code>recommended_item_id: …</code>
+                      <span class="sr-verdict good">✓ in target set</span>
+                    </div>
                   </li>
                 </ol>
 

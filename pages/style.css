@@ -465,8 +465,22 @@ pre {
 }
 .sr-b.card {
   display: grid;
-  gap: 4px;
+  grid-template-columns: 40px minmax(0, 1fr);
+  gap: 4px 10px;
+  align-items: center;
   min-width: 230px;
+}
+.sr-b.card img {
+  grid-row: span 2;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+}
+.sr-b.card.ok img {
+  grid-row: span 3;
+}
+.sr-b.card > :not(img) {
+  grid-column: 2;
 }
 .sr-b.card code {
   color: var(--body);
@@ -540,10 +554,10 @@ pre {
   background: var(--surface);
   border: 1px solid var(--line);
 }
-.sr-pc i {
-  height: 46px;
+.sr-pc img {
+  width: 100%;
+  height: 52px;
   border-radius: 9px;
-  background: linear-gradient(135deg, #eef2fb, #f8f0ea);
 }
 .sr-pc b {
   height: 7px;
@@ -962,57 +976,76 @@ pre {
   animation: sr-blink 5s infinite;
 }
 
-/* Dialogue */
+/* Dialogue: a messenger thread that scrolls inside a fixed-height panel */
 .sr-chat {
-  display: grid;
-  gap: 7px;
-  margin: 0;
-  padding: 0;
+  --chat-h: 520px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: var(--chat-h);
+  margin: 0 -6px;
+  padding: 12px 6px 8px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
   list-style: none;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 12px, #000 calc(100% - 8px), transparent);
+  mask-image: linear-gradient(180deg, transparent 0, #000 12px, #000 calc(100% - 8px), transparent);
+}
+.sr-chat:focus-visible {
+  outline: 2px solid var(--rec);
+  outline-offset: 2px;
 }
 .sr-msg {
-  position: relative;
-  max-width: 86%;
-  padding: 7px 13px 8px;
-  border-radius: 16px;
-  background: var(--ts);
+  --ava: 26px;
+  display: grid;
+  grid-template-columns: var(--ava) minmax(0, auto);
+  grid-template-areas: "ava who" "ava bd";
+  justify-content: start;
+  align-items: start;
+  column-gap: 8px;
+  row-gap: 2px;
+  flex: none;
+  align-self: flex-start;
+  max-width: 88%;
   color: var(--ink);
   font-size: 13.5px;
   line-height: 1.4;
-  transition: box-shadow 0.3s;
+}
+.sr-msg::before {
+  content: "";
+  grid-area: ava;
+  align-self: end;
+  width: var(--ava);
+  height: var(--ava);
+  border-radius: 50%;
+  background: var(--rec) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='1.8' stroke-linecap='round'%3E%3Crect x='4.5' y='7.5' width='15' height='11.5' rx='4'/%3E%3Cpath d='M12 7.5V4.6'/%3E%3Ccircle cx='12' cy='3.6' r='1.3' fill='white' stroke='none'/%3E%3Ccircle cx='9.3' cy='13' r='1.25' fill='white' stroke='none'/%3E%3Ccircle cx='14.7' cy='13' r='1.25' fill='white' stroke='none'/%3E%3C/svg%3E") center / 18px no-repeat;
 }
 .sr-msg.user {
-  justify-self: end;
-  border-bottom-right-radius: 5px;
-  background: var(--user-soft);
+  grid-template-columns: minmax(0, auto) var(--ava);
+  grid-template-areas: "who ava" "bd ava";
+  justify-content: end;
+  align-self: flex-end;
 }
-.sr-msg.rec,
-.sr-msg.hit {
-  justify-self: start;
-  border-bottom-left-radius: 5px;
-}
-.sr-msg.hit {
-  background: var(--surface);
-  border: 1px solid color-mix(in srgb, var(--hit) 45%, transparent);
+.sr-msg.user::before {
+  background: var(--user) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='1.8' stroke-linecap='round'%3E%3Ccircle cx='12' cy='8.5' r='4'/%3E%3Cpath d='M4.5 20c.8-4 3.9-6 7.5-6s6.7 2 7.5 6'/%3E%3C/svg%3E") center / 17px no-repeat;
 }
 .sr-msg.obs {
-  justify-self: center;
-  max-width: 78%;
-  border-radius: 10px;
-  background: var(--surface-2);
-  color: var(--body);
-  font-size: 12.5px;
+  grid-template-columns: minmax(0, auto);
+  grid-template-areas: "who" "bd";
+  margin-left: calc(var(--ava) + 8px);
 }
-.sr-msg p {
-  display: inline;
-  margin: 0;
+.sr-msg.obs::before {
+  content: none;
 }
-.sr-msg code {
-  font-size: 12px;
-  overflow-wrap: anywhere;
+/* consecutive agent turns share one avatar */
+.sr-msg:is(.rec, .hit, .obs) + .sr-msg:is(.rec, .hit)::before {
+  visibility: hidden;
 }
 .sr-who {
-  margin-right: 8px;
+  grid-area: who;
   color: var(--ti);
   font-size: 10.5px;
   font-weight: 750;
@@ -1020,9 +1053,179 @@ pre {
   text-transform: uppercase;
   white-space: nowrap;
 }
+.sr-msg.user .sr-who {
+  text-align: right;
+}
+.sr-bd {
+  grid-area: bd;
+  min-width: 0;
+  margin: 0;
+  padding: 7px 13px 8px;
+  border-radius: 16px;
+  background: var(--ts);
+  transition: box-shadow 0.3s;
+}
+.sr-msg.user .sr-bd {
+  border-bottom-right-radius: 5px;
+}
+.sr-msg.rec .sr-bd {
+  border-bottom-left-radius: 5px;
+}
+/* tool call: a compact mono chip */
+code.sr-bd {
+  justify-self: start;
+  padding: 4px 11px;
+  border-radius: 9px;
+  border: 1px solid color-mix(in srgb, var(--rec) 28%, transparent);
+  background: var(--rec-soft);
+  color: var(--rec-ink);
+  font-size: 12px;
+  font-weight: 550;
+  overflow-wrap: anywhere;
+}
+/* observation: a white result card */
+.sr-msg.obs .sr-bd {
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--body);
+  font-size: 12.5px;
+}
+.sr-msg.obs .sr-bd > p,
+.sr-spec p {
+  margin: 0;
+}
+.sr-msg.obs .sr-note {
+  background: var(--obs-soft);
+  border-color: transparent;
+  font-style: italic;
+}
+.sr-prods {
+  display: flex;
+  gap: 6px;
+  margin: 7px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.sr-prods li {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  width: 64px;
+  padding: 4px 4px 3px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: #fff;
+}
+.sr-prods img,
+.sr-spec img,
+.sr-pickcard img,
+.sr-pc img,
+.sr-b.card img {
+  object-fit: contain;
+  background: #fff;
+}
+.sr-prods img {
+  width: 54px;
+  height: 54px;
+}
+.sr-prods span,
+.sr-prods code {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.3;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.sr-prods .focus {
+  border-color: var(--rec);
+  box-shadow: 0 0 0 3px var(--rec-soft);
+}
+.sr-prods .focus code {
+  color: var(--rec-ink);
+  font-weight: 650;
+}
+.sr-prods .more {
+  align-content: center;
+  width: 46px;
+  border-style: dashed;
+  background: transparent;
+}
+.sr-prods .more b {
+  color: var(--body);
+  font-size: 13px;
+}
+.sr-spec {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.sr-spec img {
+  flex: none;
+  width: 52px;
+  height: 52px;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+}
+.sr-spec code {
+  color: var(--rec-ink);
+  font-weight: 650;
+}
+.sr-spec dl {
+  display: grid;
+  gap: 3px;
+  margin: 5px 0 0;
+}
+.sr-spec dl div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sr-spec dt {
+  width: 34px;
+  color: var(--muted);
+  font-size: 10.5px;
+}
+.sr-spec dd {
+  width: 92px;
+  height: 6px;
+  margin: 0;
+  border-radius: 4px;
+  background: #e5e9f1;
+}
+.sr-spec div:nth-child(2) dd {
+  width: 58px;
+}
+.sr-spec div:nth-child(3) dd {
+  width: 34px;
+}
+/* recommendation: product card with verdict pill */
+.sr-msg.hit .sr-bd {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  column-gap: 10px;
+  row-gap: 4px;
+  align-items: center;
+  padding: 8px 12px 8px 8px;
+  border-radius: 14px;
+  border-bottom-left-radius: 5px;
+  border: 1px solid color-mix(in srgb, var(--hit) 45%, transparent);
+  background: var(--surface);
+}
+.sr-pickcard img {
+  grid-row: span 2;
+  width: 48px;
+  height: 48px;
+  border-radius: 9px;
+}
+.sr-pickcard code {
+  font-size: 12px;
+}
 .sr-verdict {
-  display: inline-block;
-  margin-left: 8px;
+  justify-self: start;
   padding: 0 9px;
   border-radius: 999px;
   font-size: 11px;
@@ -1037,8 +1240,14 @@ pre {
   background: var(--hit-ink);
   color: #fff;
 }
-.sr-msg.hot {
+.sr-msg.hot .sr-bd {
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--t) 75%, transparent), 0 8px 20px -10px var(--t);
+}
+.sr-fig.sr-run .sr-msg:not(.lit) {
+  display: none;
+}
+.sr-fig.sr-run .sr-msg.lit {
+  animation: sr-pop 0.42s var(--ease);
 }
 
 /* Token strip */
@@ -1084,6 +1293,7 @@ pre {
 
 /* Tool suite */
 .sr-tool {
+  position: relative;
   margin-top: 10px;
   padding: 11px 13px;
   border-radius: 14px;
@@ -1172,6 +1382,18 @@ pre {
   color: var(--hit-ink);
   font-style: normal;
   transform: rotate(90deg);
+}
+.sr-tool.hot::after {
+  content: "called";
+  position: absolute;
+  top: -9px;
+  right: 12px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--rec);
+  color: #fff;
+  font: 650 10.5px/1.6 var(--mono);
+  animation: sr-pop 0.3s var(--ease);
 }
 .sr-tool.hot {
   background: var(--surface);
@@ -1416,39 +1638,38 @@ pre {
   pointer-events: none;
   z-index: 3;
 }
-.sr-wires .base {
-  fill: none;
-  stroke: var(--wc);
-  stroke-width: 1.5;
-  stroke-dasharray: 3 5;
-  stroke-linecap: round;
-  opacity: 0.55;
-}
+/* Only the flow path exists: hidden until its step plays, then stays drawn */
 .sr-wires .flow {
   fill: none;
-  stroke: var(--wc);
-  stroke-width: 3;
+  stroke: var(--rl);
+  stroke-width: 2.5;
   stroke-linecap: round;
   opacity: 0;
   transition: opacity 0.4s;
 }
 .sr-wires .dot {
   fill: #fff;
-  stroke: var(--wc);
+  stroke: var(--rl);
   stroke-width: 3;
   opacity: 0;
 }
 .sr-wires .live .flow,
 .sr-wires .done .flow {
-  opacity: 0.9;
+  opacity: 0.85;
+}
+.sr-wires .done .flow {
+  marker-end: url(#sr-arrow);
+}
+.sr-wires marker path {
+  fill: var(--rl);
 }
 .sr-wires .live .dot {
   opacity: 1;
 }
-.sr-wires g {
+.sr-wires {
   transition: opacity 0.5s;
 }
-.sr-fig[data-dim] .sr-wires g:not(.on) {
+.sr-fig[data-dim]:not([data-active="3"]) .sr-wires {
   opacity: 0.2;
 }
 
@@ -2440,13 +2661,26 @@ pre {
     padding: 14px 12px;
   }
   .sr-msg {
-    max-width: 96%;
+    --ava: 22px;
+    max-width: 100%;
   }
-  .sr-msg.obs {
-    max-width: 90%;
+  .sr-chat {
+    --chat-h: 440px;
   }
-  .sr-who {
-    display: block;
+  .sr-prods {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .sr-prods li {
+    width: auto;
+  }
+  .sr-prods img {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+  }
+  .sr-prods .more {
+    display: none;
   }
   .sr-tabs button {
     padding: 7px 9px 7px 7px;
