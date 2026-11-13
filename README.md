@@ -10,7 +10,7 @@
 </div>
 
 <p align="center">
-  <img src="assets/hero.png" alt="SimRec end to end: the Rec Agent decides its next action itself, calls search_products, get_item_details and get_user_preference from its toolbox, and recommends to a user simulator that knows the task need but not the target; after the simulator rejects the first item, the agent searches with a corrected query and re-recommends an item in the target set" width="100%">
+  <img src="assets/hero.png" alt="SimRec: the Rec Agent works from a toolbox of search, item-detail and preference tools while chatting with a User Simulator; it searches, inspects, checks preferences, asks, and recommends an orange vest, which is rejected because the shopper needs XL with soft flasks; it searches again and recommends a dark-blue vest that is accepted" width="100%">
 </p>
 
 <p align="center">
