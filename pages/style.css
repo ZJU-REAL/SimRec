@@ -2502,3 +2502,19 @@ pre {
   color: inherit;
   text-underline-offset: 3px;
 }
+
+/* ------------------------------- Wordmark --------------------------------- */
+.sr-hero h1.sr-title {
+  margin-top: 6px;
+  line-height: 0;
+}
+.sr-title img {
+  display: block;
+  width: min(100%, 470px);
+  height: auto;
+}
+.sr-logo-img {
+  display: block;
+  width: auto;
+  height: 26px;
+}

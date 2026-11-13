@@ -15,7 +15,7 @@
 </div>
 
 <p align="center">
-  <img src="assets/hero.png" alt="SimRec: the Rec Agent works from a toolbox of search, item-detail and preference tools while chatting with a User Simulator; it searches, inspects, checks preferences, asks, and recommends an orange vest, which is rejected because the shopper needs XL with soft flasks; it searches again and recommends a dark-blue vest that is accepted" width="100%">
+  <img src="assets/hero.jpg" alt="SimRec: the Rec Agent works from a toolbox of search, item-detail and preference tools while chatting with a User Simulator; it searches, inspects, checks preferences, asks, and recommends an orange vest, which is rejected because the shopper needs XL with soft flasks; it searches again and recommends a dark-blue vest that is accepted" width="100%">
 </p>
 
 <p align="center">
