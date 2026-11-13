@@ -1,6 +1,11 @@
 <div align="center">
 
-# SimRec
+<h1>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/title-dark.png">
+    <img src="assets/title.png" alt="SimRec" width="320">
+  </picture>
+</h1>
 
 ### Learning to Search, Ask, and Recommend from Simulated Interaction
 
