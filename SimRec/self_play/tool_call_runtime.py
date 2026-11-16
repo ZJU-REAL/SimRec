@@ -45,6 +45,8 @@ def inject_target_result_randomly(
         score = 0.0
     elif insert_at == 0:
         score = scores[0]
+    elif insert_at == len(scores):
+        score = scores[-1]
     else:
         score = (scores[insert_at - 1] + scores[insert_at]) / 2.0
     rendered_results.insert(
